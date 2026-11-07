@@ -13,13 +13,16 @@
 !   0x0C0A2DE0 title scene per-frame function    0x0C169BC4 "PRESS 1P OR 2P START"
 
         .text
+        .equ BOMB_MAX, 6
+        .equ HUD_X, 192
+        .equ HUD_Y, 300
+        .equ GOLD_VAL, 1
         .align  2
 
 ! ---------------------------------------------------------------- patcher
         .global patcher
 patcher:
-        mova    sites,r0
-        mov     r0,r1
+        mov.l   Lp_sites,r1
 1:      mov.l   @r1+,r2             ! address (0 = end)
         tst     r2,r2
         bt      2f
@@ -35,12 +38,15 @@ patcher:
         mov.l   r0,@r1
         mov.l   r0,@(4,r1)
         mov.l   r0,@(8,r1)
+        mov.l   r0,@(16,r1)
+        mov.l   r0,@(20,r1)
         mov.l   Lp_main,r0
         jmp     @r0
         nop
         .align  2
 Lp_vars: .long  0x0C7CF000
 Lp_main: .long  0x0C059970
+Lp_sites: .long sites - patcher + 0x0C7C0000
 
 ! ---------------------------------------------------------------- chk
 ! r0 = 1 when the title scene is running and PRESS 1P OR 2P START was drawn
@@ -89,7 +95,8 @@ title_wrap:
         bf      1f
         mov     #0,r0
         mov.l   r0,@(8,r9)          ! cursor back on CAVE MATSURI 1.5
-1:
+1:      mov     #0,r0
+        mov.l   r0,@(16,r9)         ! gem counter back to 0 for the next game
         mov.l   Lt_e1,r1
         mov.l   @r1,r2
         mov.l   Lt_e2,r1
@@ -246,6 +253,405 @@ gate_num:
         .align  2
 Lg_draw: .long  0x0C0548D8
 Lg_num:  .long  0x0C054D74
+
+
+! ================================================================ MATSURI ARRANGE (Ultra) features
+! Extra patch RAM variables (VARS = 0x0C7CF000):
+!   +16 gem counter (0..11999)     +20 cancel busy flag
+! Game addresses:
+!   0x0C1FB630 game mode (0 Original, 1 Maniac, 2 Ultra)
+!   0x0C1FBC0C player 1 block, bombs at +12
+!   0x0C19CC40 -> bullet manager; active list head at +0x7E004; bullet: +0 next, +16 x, +20 y (16.16)
+!   0x0C08F140 remove bullet (r4 manager, r5 bullet) -> next
+!   0x0C0A6790 spawn crystal gems, 0x0C0A6C30 spawn gold gems (r4 x, r5 y, r6 125, r7 0, stack args)
+
+! r0 = 1 when MATSURI ARRANGE was chosen and the game is in Ultra mode.  Clobbers r0, r1.
+        .align  2
+active:
+        mov.l   La_vars,r1
+        mov.l   @(8,r1),r0
+        cmp/eq  #1,r0
+        bf      1f
+        mov.l   La_mode,r1
+        mov.l   @r1,r0
+        cmp/eq  #2,r0
+        bf      1f
+        rts
+        mov     #1,r0
+1:      rts
+        mov     #0,r0
+        .align  2
+La_vars: .long  0x0C7CF000
+La_mode: .long  0x0C1FB630
+
+! ---------------------------------------------------------------- gem counter
+! Replaces the call to the game's gem-collect routine (r4 player block, r5 gem type 0-3).
+        .global gem_wrap
+gem_wrap:
+        sts.l   pr,@-r15
+        mov.l   r4,@-r15
+        mov.l   r5,@-r15
+        bsr     active
+        nop
+        mov.l   @r15+,r5
+        mov.l   @r15+,r4
+        tst     r0,r0
+        bt      9f
+        mov.l   Lg_p1,r0
+        cmp/eq  r0,r4
+        bf      9f
+        mov     #3,r0
+        cmp/hi  r0,r5
+        bt      9f
+        mova    gem_vals,r0
+        mov     r5,r1
+        add     r1,r1
+        mov.w   @(r0,r1),r1         ! value of this gem
+        mov.l   Lg_vars,r2
+        mov.l   @(16,r2),r3
+        add     r1,r3
+        mov.w   Lg_full,r1
+        cmp/hs  r1,r3
+        bf      2f
+        sub     r1,r3               ! 12000 reached: start again, extra bomb
+        mov.l   @(12,r4),r0
+        mov     #BOMB_MAX,r1
+        cmp/ge  r1,r0
+        bt      2f
+        add     #1,r0
+        mov.l   r0,@(12,r4)
+2:      mov.l   r3,@(16,r2)
+9:      lds.l   @r15+,pr
+        mov.l   Lg_orig,r0
+        jmp     @r0
+        nop
+        .align  2
+gem_vals: .word 1, 5, 10, 15
+Lg_full: .word  12000
+        .align  2
+Lg_p1:   .long  0x0C1FBC0C
+Lg_vars: .long  0x0C7CF000
+Lg_orig: .long  0x0C05FCF0
+
+! ---------------------------------------------------------------- counter display
+! Wraps the in-game per-frame callback (0x0C0AB7B0).
+        .global hud_wrap
+hud_wrap:
+        sts.l   pr,@-r15
+        mov.l   r4,@-r15
+        mov.l   r5,@-r15
+        mov.l   r6,@-r15
+        mov.l   r7,@-r15
+        bsr     active
+        nop
+        tst     r0,r0
+        bt      9f
+        mov.l   Lh_vars,r1
+        mov.l   @(16,r1),r2         ! binary counter -> packed BCD in r7
+        mova    Lh_pow,r0
+        mov     r0,r3
+        mov     #0,r7
+        mov     #4,r6
+1:      mov.l   @r3+,r1             ! 10000, 1000, 100, 10
+        mov     #0,r4
+2:      cmp/hs  r1,r2
+        bf      3f
+        sub     r1,r2
+        bra     2b
+        add     #1,r4
+3:      or      r4,r7
+        shll2   r7
+        dt      r6
+        bf/s    1b
+        shll2   r7
+        or      r2,r7
+        mov     #5,r0
+        mov.l   r0,@-r15            ! digits
+        mov.w   Lh_x,r4
+        mov.w   Lh_y,r5
+        mov.w   Lh_z,r6
+        mov.l   Lh_num,r0
+        jsr     @r0
+        nop
+        add     #4,r15
+9:      mov.l   @r15+,r7
+        mov.l   @r15+,r6
+        mov.l   @r15+,r5
+        mov.l   @r15+,r4
+        lds.l   @r15+,pr
+        mov.l   Lh_orig,r0
+        jmp     @r0
+        nop
+        .align  2
+Lh_pow:  .long  10000, 1000, 100, 10
+Lh_x:    .word  HUD_X
+Lh_y:    .word  HUD_Y
+Lh_z:    .word  250
+        .align  2
+Lh_vars: .long  0x0C7CF000
+Lh_num:  .long  0x0C054D74
+Lh_orig: .long  0x0C0AB7B0
+
+! ---------------------------------------------------------------- player 2 off
+! Wraps the two input-poll routines; while MATSURI ARRANGE is chosen the 2P start bit is cleared.
+        .global poll1_wrap, poll2_wrap
+poll1_wrap:
+        mov.l   Lq1,r0
+        bra     poll_common
+        nop
+poll2_wrap:
+        mov.l   Lq2,r0
+poll_common:
+        sts.l   pr,@-r15
+        jsr     @r0
+        nop
+        mov.l   Lp2_vars,r1
+        mov.l   @(8,r1),r0
+        cmp/eq  #1,r0
+        bf      9f
+        mov.l   Lq_mask,r2
+        mov.l   Lq_a,r1
+        mov.l   @r1,r0
+        and     r2,r0
+        mov.l   r0,@r1
+        mov.l   Lq_b,r1
+        mov.l   @r1,r0
+        and     r2,r0
+        mov.l   r0,@r1
+9:      lds.l   @r15+,pr
+        rts
+        nop
+        .align  2
+Lq1:     .long  0x0C054330
+Lq2:     .long  0x0C054260
+Lp2_vars: .long  0x0C7CF000
+Lq_mask: .long  0xFFFF7FFF
+Lq_a:    .long  0x0C0541B0
+Lq_b:    .long  0x0C0541BC
+
+! ---------------------------------------------------------------- enemy death: chain bullet cancel
+! The game's two gem spawners are entered here (their first 12 bytes jump to us).  When an enemy
+! dies in MATSURI ARRANGE Ultra, bullets within 48 px of (r4,r5) become small crystal gems, then
+! bullets within 32 px of any cancelled bullet become small gold gems, repeated until none is left
+! in range.  Then the original spawner runs.
+        .global spawn_c_wrap, spawn_g_wrap
+spawn_c_wrap:
+        mov.l   Ls_retc,r0
+        bra     spawn_common
+        nop
+spawn_g_wrap:
+        mov.l   Ls_retg,r0
+spawn_common:
+        mov.l   r0,@-r15            ! continuation address
+        sts.l   pr,@-r15
+        mov.l   r4,@-r15
+        mov.l   r5,@-r15
+        mov.l   r6,@-r15
+        mov.l   r7,@-r15
+        mov.l   Ls_vars,r1
+        mov.l   @(20,r1),r0         ! busy: this is one of our own gem spawns
+        tst     r0,r0
+        bf      9f
+        bsr     active
+        nop
+        tst     r0,r0
+        bt      9f
+        mov.l   Ls_cancel,r0
+        jsr     @r0                 ! r4,r5 still hold the death position
+        nop
+9:      mov.l   @r15+,r7
+        mov.l   @r15+,r6
+        mov.l   @r15+,r5
+        mov.l   @r15+,r4
+        lds.l   @r15+,pr
+        mov.l   @r15+,r0
+        mov.l   r8,@-r15            ! the 6 instructions replaced at the spawner entry
+        mov.l   r9,@-r15
+        mov.l   r10,@-r15
+        mov.l   r11,@-r15
+        mov.l   r12,@-r15
+        jmp     @r0
+        mov.l   r13,@-r15
+        .align  2
+Ls_retc:   .long 0x0C0A679C
+Ls_retg:   .long 0x0C0A6C3C
+Ls_vars:   .long 0x0C7CF000
+Ls_cancel: .long cancel - patcher + 0x0C7C0000
+
+! cancel(r4 x, r5 y)
+!   r8 queue read index, r9 queue write index, r10 queue base, r11 bullet manager,
+!   r12 current bullet, r13 next bullet, r14 radius squared
+cancel:
+        sts.l   pr,@-r15
+        mov.l   r8,@-r15
+        mov.l   r9,@-r15
+        mov.l   r10,@-r15
+        mov.l   r11,@-r15
+        mov.l   r12,@-r15
+        mov.l   r13,@-r15
+        mov.l   r14,@-r15
+        mov.l   Lx_vars,r1
+        mov     #1,r0
+        mov.l   r0,@(20,r1)         ! busy
+        mov.l   Lc_mgrp,r0
+        mov.l   @r0,r11
+        tst     r11,r11
+        bt      8f
+        mov.l   Lc_q,r10
+        mov     #0,r8
+        mov     #0,r9
+        mov.l   r4,@-r15            ! seed position on the stack: @r15 = y, @(4,r15) = x
+        mov.l   r5,@-r15
+        mov.w   Lc_r48,r14
+        mov     #0,r0
+        bsr     scan                ! pass 1: crystal gems around the enemy
+        mov.l   r0,@-r15            ! @r15 = gem kind (0 crystal, 1 gold)
+        add     #12,r15
+1:      cmp/ge  r9,r8               ! chain: every cancelled bullet cancels its neighbours
+        bt      8f
+        mov     r8,r0
+        shll2   r0
+        shll    r0
+        add     r10,r0
+        mov.l   @r0,r1
+        mov.l   @(4,r0),r2
+        add     #1,r8
+        mov.l   r1,@-r15
+        mov.l   r2,@-r15
+        mov.w   Lc_r32,r14
+        mov     #1,r0
+        bsr     scan
+        mov.l   r0,@-r15
+        bra     1b
+        add     #12,r15
+8:      mov.l   Lx_vars,r1
+        mov     #0,r0
+        mov.l   r0,@(20,r1)
+        mov.l   @r15+,r14
+        mov.l   @r15+,r13
+        mov.l   @r15+,r12
+        mov.l   @r15+,r11
+        mov.l   @r15+,r10
+        mov.l   @r15+,r9
+        mov.l   @r15+,r8
+        lds.l   @r15+,pr
+        rts
+        nop
+        .align  2
+Lc_r48:  .word  48*48
+Lc_r32:  .word  32*32
+        .align  2
+Lx_vars: .long  0x0C7CF000
+Lc_mgrp: .long  0x0C19CC40
+Lc_q:    .long  0x0C7D0000
+
+! scan: walk the active bullet list; every bullet within sqrt(r14) px of the centre is removed,
+! queued and turned into a gem.  On entry @(4,r15) = kind, @(8,r15) = cy, @(12,r15) = cx
+! (offsets after the bsr pushed nothing; we push pr first so add 4).
+scan:
+        sts.l   pr,@-r15            ! now kind @(4), cy @(8), cx @(12)
+        mov.l   Ln_head,r0
+        mov.l   @(r0,r11),r12
+2:      tst     r12,r12
+        bt      9f
+        mov.l   @r12,r13            ! next
+        mov.l   @(16,r12),r1
+        mov.l   @(12,r15),r2
+        sub     r2,r1
+        shlr16  r1                  ! 16.16 -> pixels
+        exts.w  r1,r1
+        mov.l   @(20,r12),r2
+        mov.l   @(8,r15),r3
+        sub     r3,r2
+        shlr16  r2
+        exts.w  r2,r2
+        mov     #64,r3
+        mov     r1,r0
+        cmp/pz  r0
+        bt      3f
+        neg     r0,r0
+3:      cmp/hs  r3,r0
+        bt      7f
+        mov     r2,r0
+        cmp/pz  r0
+        bt      4f
+        neg     r0,r0
+4:      cmp/hs  r3,r0
+        bt      7f
+        muls.w  r1,r1
+        sts     macl,r1
+        muls.w  r2,r2
+        sts     macl,r2
+        add     r2,r1
+        cmp/hi  r14,r1
+        bt      7f
+        ! hit: queue its position, remove it, spawn a gem there
+        mov.l   @(16,r12),r1
+        mov.l   @(20,r12),r2
+        mov.w   Ln_qmax,r0
+        cmp/ge  r0,r9
+        bt      5f
+        mov     r9,r0
+        shll2   r0
+        shll    r0
+        add     r10,r0
+        mov.l   r1,@r0
+        mov.l   r2,@(4,r0)
+        add     #1,r9
+5:      mov.l   r1,@-r15            ! keep x, y across the remove
+        mov.l   r2,@-r15
+        mov     r11,r4
+        mov.l   Ln_remove,r0
+        jsr     @r0
+        mov     r12,r5
+        mov.l   @r15+,r5            ! y
+        mov.l   @r15+,r4            ! x
+        mov.l   @(4,r15),r0         ! kind
+        tst     r0,r0
+        bf      6f
+        ! small crystal: spawn(x, y, 125, 0, 2, 2, 0x300, 1, 1)
+        mov     #1,r0
+        mov.l   r0,@-r15
+        mov.l   r0,@-r15
+        mov.w   Ln_val,r0
+        mov.l   r0,@-r15
+        mov     #2,r0
+        mov.l   r0,@-r15
+        mov.l   r0,@-r15
+        mov     #125,r6
+        mov     #0,r7
+        mov.l   Ln_crys,r0
+        jsr     @r0
+        nop
+        bra     7f
+        add     #20,r15
+        ! small gold: spawn(x, y, 125, 0, 2, 2, GOLD_VAL, 1)
+6:      mov     #1,r0
+        mov.l   r0,@-r15
+        mov     #GOLD_VAL,r0
+        mov.l   r0,@-r15
+        mov     #2,r0
+        mov.l   r0,@-r15
+        mov.l   r0,@-r15
+        mov     #125,r6
+        mov     #0,r7
+        mov.l   Ln_gold,r0
+        jsr     @r0
+        nop
+        add     #16,r15
+7:      bra     2b
+        mov     r13,r12
+9:      lds.l   @r15+,pr
+        rts
+        nop
+        .align  2
+Ln_qmax:   .word 2048
+Ln_val:    .word 0x300
+        .align  2
+Ln_head:   .long 0x7E004
+Ln_remove: .long 0x0C08F140
+Ln_crys:   .long 0x0C0A6790
+Ln_gold:   .long 0x0C0A6C30
 
 ! ---------------------------------------------------------------- sites table (appended by build.py)
         .align  2

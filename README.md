@@ -18,7 +18,10 @@ I did all the testing and planning.
   - Move the arrow with the joystick up and down. It starts on CAVE MATSURI 1.5 every time; that is the unpatched game.
   - The ranking line at the bottom is hidden once a coin is in; the attract screen keeps it.
   - The game's own Original / Maniac / Ultra and shot select follow as usual.
-- MATSURI ARRANGE does not change gameplay yet.
+- **MATSURI ARRANGE (Ultra mode only).** Original and Maniac are unchanged for now.
+  - **Chain bullet cancel.** When an enemy dies, enemy bullets within 48 px turn into small crystal gems. Any bullet within 32 px of a cancelled bullet turns into a small gold gem, and the chain keeps going until no bullet is in range.
+  - **Gem counter.** A number in the lower right counts the gems you collect: small crystal +1, large crystal +5, small gold +10, large gold +15. At 12000 you get an extra bomb (up to 6) and the counter starts again from 0. It is kept when you lose a life and reset for a new game.
+  - **Player 2 off.** 2P start does nothing while MATSURI ARRANGE is selected.
 
 ## Patching the game
 
@@ -30,7 +33,7 @@ Needs Python 3 only. Download `matsuri_patch.py`, then run:
 ```
 python3 matsuri_patch.py matsuri15.zip --zip --mra
 ```
-This writes `matsuriarr_u4` (CRC `c9323e95`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
+This writes `matsuriarr_u4` (CRC `7861eeae`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
 
 ### Using the patched files
 - **MAME:** copy your matsuri15 set, replace its u4 with `matsuriarr_u4`; the checksum warning is expected.

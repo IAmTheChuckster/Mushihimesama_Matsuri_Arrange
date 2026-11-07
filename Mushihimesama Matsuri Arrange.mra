@@ -49,8 +49,8 @@
     <nvram index="3" size="135680"/>
 
     <rom index="0" zip="mushimatsuriarr.zip" md5="none">
-        <part name="matsuriarr_u4" crc="c9323e95"/>
-        <part name="matsuriarr_u4" crc="c9323e95"/>
+        <part name="matsuriarr_u4" crc="7861eeae"/>
+        <part name="matsuriarr_u4" crc="7861eeae"/>
     </rom>
 
     <buttons names="Shot,Bomb,Rapid Shot,B4,Start,Coin,Test,Service,Save State" default="A,B,X,Y,Start,R,L,Select"/>
