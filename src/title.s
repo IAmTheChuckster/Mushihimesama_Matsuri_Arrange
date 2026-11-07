@@ -377,6 +377,8 @@ hud_wrap:
         add     #4,r15
         bsr     wsw                 ! 4th button: cycle weapon
         nop
+        bsr     gauge               ! gold bomb gauge in the right 6 slots
+        nop
 9:      mov.l   @r15+,r7
         mov.l   @r15+,r6
         mov.l   @r15+,r5
@@ -394,6 +396,168 @@ Lh_z:    .word  250
 Lh_vars: .long  0x0C7CF000
 Lh_num:  .long  0x0C054D74
 Lh_orig: .long  0x0C0AB7B0
+
+! ---------------------------------------------------------------- bomb gauge
+! One gold bomb icon (the game's own right-hand bomb sprite 0x4B8, tinted) per 2000 of the gem
+! counter, in the right 6 slots of the bottom bar, filled from the rightmost slot to the left.
+! Called every frame from hud_wrap.  Preserves r8-r10.
+        .align  2
+gauge:
+        sts.l   pr,@-r15
+        mov.l   r8,@-r15
+        mov.l   r9,@-r15
+        mov.l   r10,@-r15
+        mov.l   Lb_vars,r1
+        mov.l   @(16,r1),r2
+        mov.w   Lb_k,r3
+        mov     #0,r8
+1:      cmp/hs  r3,r2
+        bf      2f
+        sub     r3,r2
+        bra     1b
+        add     #1,r8
+2:      mov     #6,r0
+        cmp/gt  r0,r8
+        bf      3f
+        mov     r0,r8
+3:      tst     r8,r8
+        bt      9f
+        mov     #0,r9
+4:      mov.w   Lb_x0,r5
+        mov     r9,r0
+        shll2   r0
+        shll2   r0
+        sub     r0,r5
+        shll16  r5
+        mov     r5,r10
+        mov.w   Lb_y,r6
+        shll16  r6
+        mov.w   Lb_s1,r4
+        bsr     gdr
+        nop
+        add     #1,r9
+        cmp/eq  r8,r9
+        bf      4b
+9:      mov.l   @r15+,r10
+        mov.l   @r15+,r9
+        mov.l   @r15+,r8
+        lds.l   @r15+,pr
+        rts
+        nop
+        .align  2
+gdr:    sts.l   pr,@-r15            ! r4 sprite, r5 x, r6 y (16.16): draw and tint gold
+        mov.w   Lb_z,r7
+        mov.l   Lb_draw,r0
+        jsr     @r0
+        nop
+        mov     r0,r4
+        mov.l   r4,@-r15
+        mov.l   Lb_col,r5
+        mov.l   Lb_tint,r0
+        jsr     @r0
+        nop
+        mov.l   @r15,r4
+        mov     #0,r1
+        add     #-4,r15
+        mov.l   r1,@r15
+        mov     #2,r5
+        mov     #3,r6
+        mov.w   Lb_ff,r7
+        mov.l   Lb_bl,r0
+        jsr     @r0
+        nop
+        add     #8,r15
+        lds.l   @r15+,pr
+        rts
+        nop
+Lb_k:    .word  2000
+Lb_x0:   .word  218
+Lb_y:    .word  8
+Lb_s1:   .word  0x61E
+Lb_s2:   .word  0x61F
+Lb_z:    .word  0x100
+Lb_ff:   .word  0xFF
+        .align  2
+Lb_vars: .long  0x0C7CF000
+Lb_draw: .long  0x0C059F30
+Lb_tint: .long  0x0C0555CC
+Lb_col:  .long  0x00FF9830
+Lb_bl:   .long  0x0C0556C8
+
+! ---------------------------------------------------------------- auto Ultra
+! While MATSURI ARRANGE is chosen the mode-select scene (object 0x0C2DAF70, tag 'MCX', state at
+! +28: 4 = choosing the mode, 5 = "dare to challenge despair?" prompt, 8 = shot select) is driven
+! by itself: in state 4 the cursor (+40) is set to ULTRA (2) and button 1 is pressed; in state 5 the
+! prompt choice (0x0C5EE960) is set to "bring it on" (1) and button 1 is pressed.  Any other scene
+! is left alone.  Called from poll_common once per input poll.  Clobbers r0-r3.
+        .align  2
+auto_ultra:
+        mov.l   Lu_obj,r1
+        mov.l   @(12,r1),r0
+        mov.l   Lu_tag,r2
+        cmp/eq  r2,r0
+        bf      9f
+        mov.l   @(28,r1),r0
+        cmp/eq  #4,r0
+        bt      1f
+        cmp/eq  #5,r0
+        bf      9f
+        mov.l   Lu_ask,r2           ! state 5: answer the prompt with "bring it on"
+        mov     #1,r3
+        bra     2f
+        mov.l   r3,@r2
+1:      mov     #2,r3               ! state 4: cursor on ULTRA
+        mov.l   r3,@(40,r1)
+2:      mov.l   Lu_edge,r1          ! press button 1 (new-press word of player 1)
+        mov.l   @r1,r0
+        or      #0x10,r0
+        mov.l   r0,@r1
+9:      rts
+        nop
+        .align  2
+Lu_obj:  .long  0x0C2DAF70
+Lu_tag:  .long  0x4D435800
+Lu_ask:  .long  0x0C5EE960
+Lu_edge: .long  0x0C05417C
+
+! ---------------------------------------------------------------- shot select: right column only
+! Mode-select scene state 8 = shot select.  The cursor column word (0x0C2DC9DC) is 0 on the left
+! column: then a RIGHT press (bit 8) is injected into the new-press word; in the right column any
+! LEFT press (bit 4) is removed.  Called from poll_common next to auto_ultra.  Clobbers r0-r3.
+        .align  2
+lockcol:
+        mov.l   Lu_obj2,r1
+        mov.l   @(12,r1),r0
+        mov.l   Lu_tag2,r2
+        cmp/eq  r2,r0
+        bf      9f
+        mov.l   @(28,r1),r0
+        cmp/eq  #8,r0
+        bf      9f
+        mov.l   Lk_col,r2
+        mov.l   @r2,r0
+        mov.l   Lk_raw,r1            ! held directions (the cursor code reads this word)
+        tst     r0,r0
+        mov.l   @r1,r0
+        bf      5f
+        or      #8,r0                ! left column: hold RIGHT
+        bra     6f
+        nop
+5:      mov     #-5,r3               ! right column: drop LEFT
+        and     r3,r0
+        mov.l   r0,@r1
+        mov.l   Lu_edge2,r1
+        mov.l   @r1,r0
+        and     r3,r0
+6:      mov.l   r0,@r1
+9:      rts
+        nop
+        .align  2
+Lu_obj2:  .long 0x0C2DAF70
+Lu_tag2:  .long 0x4D435800
+Lu_edge2: .long 0x0C05417C
+Lk_col:   .long 0x0C2DC9DC
+Lk_raw:   .long 0x0C054178
 
 ! ---------------------------------------------------------------- weapon change (4th button)
 ! Called every frame by hud_wrap while MATSURI ARRANGE + Ultra is active.  A new press of the
@@ -478,6 +642,10 @@ poll_common:
         mov.l   @r1,r0
         and     r2,r0
         mov.l   r0,@r1
+        bsr     auto_ultra          ! MATSURI ARRANGE: pick Ultra by itself
+        nop
+        bsr     lockcol             ! shot select: right column only
+        nop
 9:      lds.l   @r15+,pr
         rts
         nop

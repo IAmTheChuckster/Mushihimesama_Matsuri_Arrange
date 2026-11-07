@@ -23,6 +23,9 @@ I did all the testing and planning.
   - **Gem counter.** A number in the lower right counts the gems you collect: small crystal +1, large crystal +5, small gold +10, large gold +15. At 12000 you get an extra bomb (up to 6) and the counter starts again from 0. It is kept when you lose a life and reset for a new game.
   - **Player 2 off.** 2P start does nothing while MATSURI ARRANGE is selected.
   - **Weapon change.** The 4th button (shown as `Weapon Change` in the MiSTer MRA, Y by default) switches player 1 to the next weapon on the fly: 1 → 2 → 3 → 1. The weapon is rebuilt with the game's own routine, so shot, laser and colour all change, and power, bombs and score are kept.
+  - **Auto Ultra.** Choosing MATSURI ARRANGE selects ULTRA and answers the despair prompt by itself; the screens still run through quickly.
+  - **Shot select.** The cursor starts on the top-right weapon and cannot move to the left column, so only the right-column weapons can be chosen.
+  - **Bomb gauge.** The gem counter number stays. For every 2000 counter points one gold swirl fills one of the 6 right-hand slots of the bomb bar, from the right edge to the left; at 12000 a bomb is added (maximum 6) and the slots empty.
 
 ## Patching the game
 
@@ -34,7 +37,7 @@ Needs Python 3 only. Download `matsuri_patch.py`, then run:
 ```
 python3 matsuri_patch.py matsuri15.zip --zip --mra
 ```
-This writes `matsuriarr_u4` (CRC `d640ebbc`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
+This writes `matsuriarr_u4` (CRC `76e62c75`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
 
 ### Using the patched files
 - **MAME:** copy your matsuri15 set, replace its u4 with `matsuriarr_u4`; the checksum warning is expected.
