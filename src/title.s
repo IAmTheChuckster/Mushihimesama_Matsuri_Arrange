@@ -40,6 +40,7 @@ patcher:
         mov.l   r0,@(8,r1)
         mov.l   r0,@(16,r1)
         mov.l   r0,@(20,r1)
+        mov.l   r0,@(24,r1)
         mov.l   Lp_main,r0
         jmp     @r0
         nop
@@ -374,6 +375,8 @@ hud_wrap:
         jsr     @r0
         nop
         add     #4,r15
+        bsr     wsw                 ! 4th button: cycle weapon
+        nop
 9:      mov.l   @r15+,r7
         mov.l   @r15+,r6
         mov.l   @r15+,r5
@@ -391,6 +394,63 @@ Lh_z:    .word  250
 Lh_vars: .long  0x0C7CF000
 Lh_num:  .long  0x0C054D74
 Lh_orig: .long  0x0C0AB7B0
+
+! ---------------------------------------------------------------- weapon change (4th button)
+! Called every frame by hud_wrap while MATSURI ARRANGE + Ultra is active.  A new press of the
+! 4th button (raw input bit 0x80 at 0x0C054178) moves player 1 to the next weapon 0 -> 1 -> 2 -> 0:
+! the weapon index is stored in the player block (+24 active, +28 selected) and in the weapon
+! object (type field +0x98), then the game's own weapon-object constructor (0x0C09CDC0) is run
+! again so every weapon-dependent field is rebuilt exactly as at the start of a game.
+        .align  2
+wsw:
+        sts.l   pr,@-r15
+        mov.l   Lw_in,r1
+        mov.l   @r1,r2              ! raw input word
+        mov.w   Lw_bit,r3
+        and     r3,r2               ! 4th button held?
+        mov.l   Lw_vars,r4
+        mov.l   @(24,r4),r5         ! held last frame?
+        mov.l   r2,@(24,r4)
+        tst     r2,r2
+        bt      9f
+        tst     r5,r5
+        bf      9f                  ! still held: not a new press
+        mov.l   Lw_pl,r4            ! player 1 block
+        mov.w   Lw_off,r0
+        mov.l   @(r0,r4),r6         ! weapon object
+        mov.l   Lw_lo,r1
+        cmp/hs  r1,r6
+        bf      9f
+        mov.l   Lw_hi,r1
+        cmp/hs  r1,r6
+        bt      9f
+        mov.l   @(24,r4),r2         ! current weapon
+        add     #1,r2
+        mov     #3,r1
+        cmp/hs  r1,r2
+        bf      1f
+        mov     #0,r2
+1:      mov.l   r2,@(24,r4)
+        mov.l   r2,@(28,r4)
+        mov.w   Lw_type,r0
+        mov.l   r2,@(r0,r6)
+        mov.l   Lw_ctor,r0
+        jsr     @r0
+        mov     r6,r4
+9:      lds.l   @r15+,pr
+        rts
+        nop
+        .align  2
+Lw_bit:  .word  0x80
+Lw_off:  .word  0xDC
+Lw_type: .word  0x98
+        .align  2
+Lw_in:   .long  0x0C054178
+Lw_vars: .long  0x0C7CF000
+Lw_pl:   .long  0x0C1FBC0C
+Lw_lo:   .long  0x0C000000
+Lw_hi:   .long  0x0D000000
+Lw_ctor: .long  0x0C09CDC0
 
 ! ---------------------------------------------------------------- player 2 off
 ! Wraps the two input-poll routines; while MATSURI ARRANGE is chosen the 2P start bit is cleared.
