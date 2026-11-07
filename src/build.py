@@ -74,9 +74,7 @@ SITES = [(0x0C0A31E0, 0x0C0548D8, "coin_draw"),    # coin message task: draw tex
          (0x0C05FEBC, 0x0C05DB30, "bomb_wrap"),
          (0x0C05F168, 0x0C0602A0, "bombfx_wrap"),
          (0x0C05ED98, 0x0C0602A0, "bombfx_wrap"),
-         (0x0C05FEB8, 0x0C0E3B90, "bombgo_wrap"),
-         (0x0C05B700, 0x0C05F9F0, "inv_wrap"),
-         (0x0C05B7E0, 0x0C05F9F0, "inv_wrap")]  # bomb trigger -> cancel bullets into gems
+         (0x0C05FEB8, 0x0C0E3B90, "bombgo_wrap")]  # bomb trigger -> cancel bullets into gems
 
 def title_image():
     code, syms = asm("title")
