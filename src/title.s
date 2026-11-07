@@ -321,6 +321,17 @@ gem_wrap:
         bt      2f
         add     #1,r0
         mov.l   r0,@(12,r4)
+        mov.l   r2,@-r15            ! bomb added: play her bomb shout
+        mov.l   r3,@-r15
+        mov.l   r4,@-r15
+        mov.l   r5,@-r15
+        mov.l   Lg_shout,r0
+        jsr     @r0
+        nop
+        mov.l   @r15+,r5
+        mov.l   @r15+,r4
+        mov.l   @r15+,r3
+        mov.l   @r15+,r2
 2:      mov.l   r3,@(16,r2)
 9:      lds.l   @r15+,pr
         mov.l   Lg_orig,r0
@@ -333,6 +344,7 @@ Lg_full: .word  12000
 Lg_p1:   .long  0x0C1FBC0C
 Lg_vars: .long  0x0C7CF000
 Lg_orig: .long  0x0C05FCF0
+Lg_shout: .long 0x0C0E2330
 
 ! ---------------------------------------------------------------- counter display
 ! Wraps the in-game per-frame callback (0x0C0AB7B0).
