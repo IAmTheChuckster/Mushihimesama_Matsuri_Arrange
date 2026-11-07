@@ -899,6 +899,26 @@ bomb_wrap:
         .align  2
 Lbw_orig: .long 0x0C05DB30
 
+
+! The bomb button path starts the big bomb blast with 0x0C0602A0(r4); skip it in ARRANGE Ultra.
+        .global bombfx_wrap
+bombfx_wrap:
+        sts.l   pr,@-r15
+        mov.l   r4,@-r15
+        bsr     active
+        nop
+        tst     r0,r0
+        mov.l   @r15+,r4
+        lds.l   @r15+,pr
+        bt      1f
+        rts
+        mov     #0,r0
+1:      mov.l   Lbf_orig,r0
+        jmp     @r0
+        nop
+        .align  2
+Lbf_orig: .long 0x0C0602A0
+
 bombcancel:
         sts.l   pr,@-r15
         mov.l   r8,@-r15

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Mushihimesama Matsuri Arrange (Cave CV1000) - patch build 9
+Mushihimesama Matsuri Arrange (Cave CV1000) - patch build 10
 
 Usage:
     python3 matsuri_patch.py matsuri15.zip              -> writes matsuriarr_u4 next to the zip
@@ -9,13 +9,13 @@ Usage:
     python3 matsuri_patch.py matsuri15.zip -o OUT       -> writes the patched matsuriarr_u4 to OUT
     python3 matsuri_patch.py u4                      -> a loose original u4 works too (no --zip)
 
-The original u4 must have CRC32 6af99f0e; the result is checked to be c734e92e.
+The original u4 must have CRC32 6af99f0e; the result is checked to be 2a765011.
 Only the Python standard library is used.
 """
 import argparse, base64, os, sys, zipfile, zlib
 
 ORIG_CRC = 0x6AF99F0E
-PATCHED_CRC = 0xC734E92E
+PATCHED_CRC = 0x2A765011
 U4_SIZE = 0x200000
 OUT_NAME = "matsuriarr_u4"
 SET_NAME = "mushimatsuriarr.zip"
@@ -36,9 +36,9 @@ PATCHES = [
     (0x169904, base64.b64decode(
         "ICAyIDIwLzYxMTcvTSBUQVVTSVJBIFJSTkFFRyAg")),
     (0x1FBE00, base64.b64decode(
-        "BdEG0gbTFmAQQwIi+48EcgLQK0AJAAkAH6CAvnwMAAAAAOwB")),
+        "BdEG0gbTFmAQQwIi+48EcgLQK0AJAAkAH6CAvnwMAAAAAPcB")),
     (0x1FBE80, base64.b64decode(
-        "DNEWYigiBokWYxZkImUwNfeL9q9CIgXRAOACIQERAhEEEQURBhEC0CtACQB8DADwBQxwmXwM2AYG"
+        "DNEWYigiBokWYxZkImUwNfeL9q9CIgXRAOACIQERAhEEEQURBhEC0CtACQB8DADwBQxwmXwM+AYG"
         "0AJgBtERUigiBYkoMAPiJjABiQsAAeALAADgAAzYJHwMAPAiT0YvVi9mL3Yvhi+WL6YvH9ESaB/Z"
         "kVKBGYNjKDMD4AYzAYsA4AIZAOAEGRrREmIa0RJjOyIB4AgiAokA4AWgAhkC4AgiAYkB4AIZFNo4"
         "5BTVFtYXxwtKA2c45BLVE9YZxwtKA2eSUAggDtUAiQ7VKOQO1hjHC0oDZ/Zq9mn2aPZn9mb2ZfZk"
@@ -66,13 +66,14 @@ PATCHES = [
         "UzgyKUIvYijTMmMTYBFAAIkLYDIwP4kjYBFAAIkLYDIwOYkfIRoBLyIaAiwx5jEyicRRxVI1kAM5"
         "BomTYAhAAECsMBIgIRABeRYvJi+zZBfQC0DDZfZl9mTxUAggDosB4AYvBi8ekAYvAuAGLwYvfeYA"
         "5w/QC0AJAA2gFH8B4AYvAeAGLwLgBi8GL33mAOcJ0AtACQAQf6mv02wmTwsACQAJAAAIAAMHAATg"
-        "fAwc8AgMQPEKDJBnCgwwbCJPRi9WL729CQAIIAaJDbAJAPZl9mQmTwsACQD2ZfZkJk8B0CtACQAF"
-        "DDDbIk+GL5Yvpi+2L8Yv1i/mLxDRAeAFEQ7QBxEP0AJruCsJiQ7aAOgA6QDgBi8GL//uZr8GLwx/"
-        "B9EA4AUR9m72bfZs9mv2avZp9mgmTwsACQAAAP9/fAwA8BkMQMx9DAAACgzgMQUM2Eh8DDgBCgw4"
-        "NwUM2Eh8DGwBCgxENwUMdE18DIABCgwMIQUM2Eh8DJwBCgwEIgUM2Eh8DJwBCgwQIQUMdE18DLIB"
-        "BQz8tgUM8Px8DPABCgzAvwoMsLd8DFQCBQz4mgUMMEN8DFAEBQxQmQUMYEJ8DFYECgyQZ4Yvli8B"
-        "0CtACgyUZ6Yvti8JAAkACgyYZ8Yv1i98DKAECgwwbIYvli8B0CtACgw0bKYvti8JAAkACgw4bMYv"
-        "1i98DKYEBQy8/gUMMNt8DEwGAAAAAAAAAAAAAAAA")),
+        "fAwc8AgMQPEKDJBnCgwwbCJPRi9WL729CQAIIAaJHbAJAPZl9mQmTwsACQD2ZfZkJk8B0CtACQAF"
+        "DDDbIk9GL6i9CQAIIPZkJk8BiQsAAOAB0CtACQAJAAYMoAIiT4Yvli+mL7Yvxi/WL+YvENEB4AUR"
+        "DtAHEQ/QAmu4KwmJDtoA6ADpAOAGLwYv/+5WvwYvDH8H0QDgBRH2bvZt9mz2a/Zq9mn2aCZPCwAJ"
+        "AAAA/398DADwGQxAzH0MAAAKDOAxBQzYSHwMOAEKDDg3BQzYSHwMbAEKDEQ3BQx0TXwMgAEKDAwh"
+        "BQzYSHwMnAEKDAQiBQzYSHwMnAEKDBAhBQx0TXwMsgEFDPy2BQzw/HwM8AEKDMC/Cgywt3wMVAIF"
+        "DPiaBQwwQ3wMUAQFDFCZBQxgQnwMVgQKDJBnhi+WLwHQK0AKDJRnpi+2LwkACQAKDJhnxi/WL3wM"
+        "oAQKDDBshi+WLwHQK0AKDDRspi+2LwkACQAKDDhsxi/WL3wMpgQFDLz+BQww23wMTAYFDGjxBgyg"
+        "AnwMeAYAAAAAAAAAAAAAAAA=")),
 ]
 
 
@@ -128,8 +129,8 @@ MRA_TEMPLATE = """<!--
     <nvram index="3" size="135680"/>
 
     <rom index="0" zip="mushimatsuriarr.zip" md5="none">
-        <part name="matsuriarr_u4" crc="c734e92e"/>
-        <part name="matsuriarr_u4" crc="c734e92e"/>
+        <part name="matsuriarr_u4" crc="2a765011"/>
+        <part name="matsuriarr_u4" crc="2a765011"/>
     </rom>
 
     <buttons names="Shot,Bomb,Rapid Shot,Weapon Change,Start,Coin,Test,Service,Save State" default="A,B,X,Y,Start,R,L,Select"/>
@@ -168,7 +169,7 @@ def mra_text():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Patch Mushihimesama Matsuri 1.5 u4 into matsuriarr_u4 (Matsuri Arrange, build 9)")
+    ap = argparse.ArgumentParser(description="Patch Mushihimesama Matsuri 1.5 u4 into matsuriarr_u4 (Matsuri Arrange, build 10)")
     ap.add_argument("input", help="matsuri15.zip or a loose original u4 file")
     ap.add_argument("-o", "--output", help="where to write matsuriarr_u4")
     ap.add_argument("--zip", action="store_true", help="also write mushimatsuriarr.zip (input must be a zip)")
