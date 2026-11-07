@@ -705,6 +705,8 @@ cancel:
         mov.l   Lx_vars,r1
         mov     #1,r0
         mov.l   r0,@(20,r1)         ! busy
+        mov     #64,r0
+        mov.l   r0,@(28,r1)         ! early-reject window (px) used by scan
         mov.l   Lc_mgrp,r0
         mov.l   @r0,r11
         tst     r11,r11
@@ -777,7 +779,8 @@ scan:
         sub     r3,r2
         shlr16  r2
         exts.w  r2,r2
-        mov     #64,r3
+        mov.l   Ln_lim,r3
+        mov.l   @r3,r3
         mov     r1,r0
         cmp/pz  r0
         bt      3f
@@ -861,9 +864,87 @@ Ln_qmax:   .word 2048
 Ln_val:    .word 0x300
         .align  2
 Ln_head:   .long 0x7E004
+Ln_lim:    .long 0x0C7CF01C
 Ln_remove: .long 0x0C08F140
 Ln_crys:   .long 0x0C0A6790
 Ln_gold:   .long 0x0C0A6C30
+
+
+! ---------------------------------------------------------------- bomb button
+! The game's bomb trigger (0x0C05FE40) calls 0x0C05DB30(r4, -1) to start the bomb.  In MATSURI
+! ARRANGE Ultra that call comes here: every enemy bullet on screen becomes a small crystal gem
+! and the original bomb effect is skipped.  (The trigger already used up one bomb and set its timer.)
+        .global bomb_wrap
+bomb_wrap:
+        sts.l   pr,@-r15
+        mov.l   r4,@-r15
+        mov.l   r5,@-r15
+        bsr     active
+        nop
+        tst     r0,r0
+        bt      1f
+        bsr     bombcancel
+        nop
+        mov.l   @r15+,r5
+        mov.l   @r15+,r4
+        lds.l   @r15+,pr
+        rts
+        nop
+1:      mov.l   @r15+,r5
+        mov.l   @r15+,r4
+        lds.l   @r15+,pr
+        mov.l   Lbw_orig,r0
+        jmp     @r0
+        nop
+        .align  2
+Lbw_orig: .long 0x0C05DB30
+
+bombcancel:
+        sts.l   pr,@-r15
+        mov.l   r8,@-r15
+        mov.l   r9,@-r15
+        mov.l   r10,@-r15
+        mov.l   r11,@-r15
+        mov.l   r12,@-r15
+        mov.l   r13,@-r15
+        mov.l   r14,@-r15
+        mov.l   Lbx_vars,r1
+        mov     #1,r0
+        mov.l   r0,@(20,r1)         ! busy: our own gem spawns must not chain
+        mov.l   Lbc_lim,r0
+        mov.l   r0,@(28,r1)         ! whole screen
+        mov.l   Lbx_mgr,r0
+        mov.l   @r0,r11
+        tst     r11,r11
+        bt      8f
+        mov.l   Lbx_q,r10
+        mov     #0,r8
+        mov     #0,r9
+        mov     #0,r0
+        mov.l   r0,@-r15            ! cx
+        mov.l   r0,@-r15            ! cy
+        mov     #-1,r14             ! any distance
+        bsr     scan
+        mov.l   r0,@-r15            ! kind 0 = crystal
+        add     #12,r15
+8:      mov.l   Lbx_vars,r1
+        mov     #0,r0
+        mov.l   r0,@(20,r1)
+        mov.l   @r15+,r14
+        mov.l   @r15+,r13
+        mov.l   @r15+,r12
+        mov.l   @r15+,r11
+        mov.l   @r15+,r10
+        mov.l   @r15+,r9
+        mov.l   @r15+,r8
+        lds.l   @r15+,pr
+        rts
+        nop
+        .align  2
+Lbc_lim: .long  0x00007FFF
+Lbx_vars: .long 0x0C7CF000
+Lbx_mgr: .long  0x0C19CC40
+Lbx_q:   .long  0x0C7D0000
 
 ! ---------------------------------------------------------------- sites table (appended by build.py)
         .align  2

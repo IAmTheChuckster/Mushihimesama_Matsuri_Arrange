@@ -70,7 +70,8 @@ SITES = [(0x0C0A31E0, 0x0C0548D8, "coin_draw"),    # coin message task: draw tex
          # gold gem spawner entry
          (0x0C0A6C30, 0x2F862F96, 0xD001402B),
          (0x0C0A6C34, 0x2FA62FB6, 0x00090009),
-         (0x0C0A6C38, 0x2FC62FD6, "spawn_g_wrap")]
+         (0x0C0A6C38, 0x2FC62FD6, "spawn_g_wrap"),
+         (0x0C05FEBC, 0x0C05DB30, "bomb_wrap")]  # bomb trigger -> cancel bullets into gems
 
 def title_image():
     code, syms = asm("title")
