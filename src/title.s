@@ -432,6 +432,11 @@ gauge:
         mov     r5,r10
         mov.w   Lb_y,r6
         shll16  r6
+        mov.l   Lb_bar,r1            ! follow the bar's slide (boss start, score tally)
+        mov.l   @(16,r1),r2
+        add     r2,r6
+        mov.l   @(20,r1),r2
+        add     r2,r6
         mov.w   Lb_s1,r4
         bsr     gdr
         nop
@@ -483,6 +488,7 @@ Lb_draw: .long  0x0C059F30
 Lb_tint: .long  0x0C0555CC
 Lb_col:  .long  0x00FF9830
 Lb_bl:   .long  0x0C0556C8
+Lb_bar:  .long  0x0C2DCA84
 
 ! ---------------------------------------------------------------- auto Ultra
 ! While MATSURI ARRANGE is chosen the mode-select scene (object 0x0C2DAF70, tag 'MCX', state at
@@ -599,7 +605,7 @@ wsw:
         mov     r6,r4
         mov     #6,r4               ! weapon-change sound (game SE call)
         mov.w   Lw_se,r5
-        mov     #0x1E,r6
+        mov     #0x37,r6
         mov.w   Lw_vol,r7
         mov.l   Lw_snd,r0
         jsr     @r0
@@ -608,8 +614,8 @@ wsw:
         rts
         nop
         .align  2
-Lw_se:   .word  0x17
-Lw_vol:  .word  0xF0
+Lw_se:   .word  0x5B
+Lw_vol:  .word  0x5A
 Lw_bit:  .word  0x80
 Lw_off:  .word  0xDC
 Lw_type: .word  0x98
@@ -619,7 +625,7 @@ Lw_vars: .long  0x0C7CF000
 Lw_pl:   .long  0x0C1FBC0C
 Lw_lo:   .long  0x0C000000
 Lw_hi:   .long  0x0D000000
-Lw_snd:  .long  0x0C0E36F0
+Lw_snd:  .long  0x0C05923C
 Lw_ctor: .long  0x0C09CDC0
 
 ! ---------------------------------------------------------------- player 2 off
