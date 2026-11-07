@@ -520,10 +520,11 @@ Lu_tag:  .long  0x4D435800
 Lu_ask:  .long  0x0C5EE960
 Lu_edge: .long  0x0C05417C
 
-! ---------------------------------------------------------------- shot select: right column only
-! Mode-select scene state 8 = shot select.  The cursor column word (0x0C2DC9DC) is 0 on the left
-! column: then a RIGHT press (bit 8) is injected into the new-press word; in the right column any
-! LEFT press (bit 4) is removed.  Called from poll_common next to auto_ultra.  Clobbers r0-r3.
+! ---------------------------------------------------------------- shot select: auto pick
+! Mode-select scene state 8 = shot select; the shot-select object (0x0C2DC9A0) is 3 while choosing
+! and 5 once the game starts.  While choosing, the cursor is put on the top-right weapon (row
+! 0x0C2DC9A8 = 0, column 0x0C2DC9DC = 1) and button 1 is pressed.  Called from poll_common.
+! Clobbers r0-r3.
         .align  2
 lockcol:
         mov.l   Lu_obj2,r1
@@ -534,30 +535,25 @@ lockcol:
         mov.l   @(28,r1),r0
         cmp/eq  #8,r0
         bf      9f
-        mov.l   Lk_col,r2
-        mov.l   @r2,r0
-        mov.l   Lk_raw,r1            ! held directions (the cursor code reads this word)
-        tst     r0,r0
+        mov.l   Lk_ss,r1
         mov.l   @r1,r0
-        bf      5f
-        or      #8,r0                ! left column: hold RIGHT
-        bra     6f
-        nop
-5:      mov     #-5,r3               ! right column: drop LEFT
-        and     r3,r0
-        mov.l   r0,@r1
+        cmp/eq  #3,r0
+        bf      9f
+        mov     #0,r2
+        mov.l   r2,@(8,r1)          ! row 0
+        mov     #1,r2
+        mov.l   r2,@(60,r1)         ! column 1 (right)
         mov.l   Lu_edge2,r1
         mov.l   @r1,r0
-        and     r3,r0
-6:      mov.l   r0,@r1
+        or      #0x10,r0
+        mov.l   r0,@r1
 9:      rts
         nop
         .align  2
 Lu_obj2:  .long 0x0C2DAF70
 Lu_tag2:  .long 0x4D435800
 Lu_edge2: .long 0x0C05417C
-Lk_col:   .long 0x0C2DC9DC
-Lk_raw:   .long 0x0C054178
+Lk_ss:    .long 0x0C2DC9A0
 
 ! ---------------------------------------------------------------- weapon change (4th button)
 ! Called every frame by hud_wrap while MATSURI ARRANGE + Ultra is active.  A new press of the
@@ -644,7 +640,7 @@ poll_common:
         mov.l   r0,@r1
         bsr     auto_ultra          ! MATSURI ARRANGE: pick Ultra by itself
         nop
-        bsr     lockcol             ! shot select: right column only
+        bsr     lockcol             ! shot select: pick top-right
         nop
 9:      lds.l   @r15+,pr
         rts
