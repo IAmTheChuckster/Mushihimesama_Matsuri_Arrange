@@ -21,6 +21,7 @@ Open the **[Web Patcher](https://iamthechuckster.github.io/Mushihimesama_Matsuri
 
 ### With Python
 
+## Skills
 
 ## Testing
 This patch was tested with MAME 0.289 and [CV1k core for the MiSTer FPGA by Raki](https://www.patreon.com/c/ikamusume/posts)<br>
