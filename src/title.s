@@ -597,10 +597,19 @@ wsw:
         mov.l   Lw_ctor,r0
         jsr     @r0
         mov     r6,r4
+        mov     #6,r4               ! weapon-change sound (game SE call)
+        mov.w   Lw_se,r5
+        mov     #0x1E,r6
+        mov.w   Lw_vol,r7
+        mov.l   Lw_snd,r0
+        jsr     @r0
+        nop
 9:      lds.l   @r15+,pr
         rts
         nop
         .align  2
+Lw_se:   .word  0x17
+Lw_vol:  .word  0xF0
 Lw_bit:  .word  0x80
 Lw_off:  .word  0xDC
 Lw_type: .word  0x98
@@ -610,6 +619,7 @@ Lw_vars: .long  0x0C7CF000
 Lw_pl:   .long  0x0C1FBC0C
 Lw_lo:   .long  0x0C000000
 Lw_hi:   .long  0x0D000000
+Lw_snd:  .long  0x0C0E36F0
 Lw_ctor: .long  0x0C09CDC0
 
 ! ---------------------------------------------------------------- player 2 off
