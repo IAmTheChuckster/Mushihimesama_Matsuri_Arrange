@@ -13,13 +13,31 @@ While Claude was used I put effort in making sure there are balanced gameplay.<b
 I did all the testing and planning.
 
 ## Change Notes
+- **Warning screen.** Shows a disclaimer that this is an unofficial project, `HAVE FUN!!!` and `2026/11/7 MATSURI ARRANGE`, both centred, all in capitals.
+- **Title menu.** After a coin is inserted, the title shows **CAVE MATSURI 1.5 / MATSURI ARRANGE** above `PRESS 1P OR 2P START` and `CREDITS`, which move down.
+  - Move the arrow with the joystick up and down. It starts on CAVE MATSURI 1.5 every time; that is the unpatched game.
+  - The ranking line at the bottom is hidden once a coin is in; the attract screen keeps it.
+  - The game's own Original / Maniac / Ultra and shot select follow as usual.
+- MATSURI ARRANGE does not change gameplay yet.
 
 ## Patching the game
 
 ### With the web patcher (easiest)
-Open the **[Web Patcher](https://iamthechuckster.github.io/Mushihimesama_Matsuri_Arrange/)** (`index.html`) and drop in your `rom.zip`. It checks the file names and CRCs, builds the patched files automatically, and lets you download just the patched files or a complete `rom.zip` romset. Everything runs in your browser; nothing is uploaded.
+Open the **[Web Patcher](https://iamthechuckster.github.io/Mushihimesama_Matsuri_Arrange/)** (`index.html`) and drop in your `matsuri15.zip`. It checks the file names and CRCs, builds the patched files automatically, and lets you download just the patched files or a complete `mushimatsuriarr.zip` romset. Everything runs in your browser; nothing is uploaded.
 
 ### With Python
+Needs Python 3 only. Download `matsuri_patch.py`, then run:
+```
+python3 matsuri_patch.py matsuri15.zip --zip --mra
+```
+This writes `matsuriarr_u4` (CRC `c9323e95`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
+
+### Using the patched files
+- **MAME:** copy your matsuri15 set, replace its u4 with `matsuriarr_u4`; the checksum warning is expected.
+- **MiSTer (CV1k core):** `mushimatsuriarr.zip` goes in `games/mame`, the `.mra` in `_Arcade`.
+
+### Building from source
+`python3 src/build.py matsuri15.zip OUT_u4` (needs `binutils-sh4-linux-gnu`), then `python3 src/update_patchers.py matsuri15.zip OUT_u4 BUILD`.
 
 ## Skills
 

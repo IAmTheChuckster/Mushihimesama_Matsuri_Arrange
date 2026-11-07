@@ -1,0 +1,5 @@
+roms/
+work/
+*.zip
+*_u4
+__pycache__/
