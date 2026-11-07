@@ -347,34 +347,6 @@ hud_wrap:
         nop
         tst     r0,r0
         bt      9f
-        mov.l   Lh_vars,r1
-        mov.l   @(16,r1),r2         ! binary counter -> packed BCD in r7
-        mova    Lh_pow,r0
-        mov     r0,r3
-        mov     #0,r7
-        mov     #4,r6
-1:      mov.l   @r3+,r1             ! 10000, 1000, 100, 10
-        mov     #0,r4
-2:      cmp/hs  r1,r2
-        bf      3f
-        sub     r1,r2
-        bra     2b
-        add     #1,r4
-3:      or      r4,r7
-        shll2   r7
-        dt      r6
-        bf/s    1b
-        shll2   r7
-        or      r2,r7
-        mov     #5,r0
-        mov.l   r0,@-r15            ! digits
-        mov.w   Lh_x,r4
-        mov.w   Lh_y,r5
-        mov.w   Lh_z,r6
-        mov.l   Lh_num,r0
-        jsr     @r0
-        nop
-        add     #4,r15
         bsr     wsw                 ! 4th button: cycle weapon
         nop
         bsr     gauge               ! gold bomb gauge in the right 6 slots
@@ -476,7 +448,7 @@ gdr:    sts.l   pr,@-r15            ! r4 sprite, r5 x, r6 y (16.16): draw and ti
         rts
         nop
 Lb_k:    .word  2000
-Lb_x0:   .word  218
+Lb_x0:   .word  220
 Lb_y:    .word  8
 Lb_s1:   .word  0x61E
 Lb_s2:   .word  0x61F
