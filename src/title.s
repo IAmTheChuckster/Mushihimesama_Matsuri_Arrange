@@ -363,6 +363,12 @@ hud_wrap:
         nop
         bsr     gauge               ! gold bomb gauge in the right 6 slots
         nop
+        mov.l   Lh_vars2,r1         ! bomb protection frames
+        mov.l   @(32,r1),r0
+        cmp/pl  r0
+        bf      9f
+        add     #-1,r0
+        mov.l   r0,@(32,r1)
 9:      mov.l   @r15+,r7
         mov.l   @r15+,r6
         mov.l   @r15+,r5
@@ -379,6 +385,7 @@ Lh_z:    .word  250
         .align  2
 Lh_vars: .long  0x0C7CF000
 Lh_num:  .long  0x0C054D74
+Lh_vars2: .long 0x0C7CF000
 Lh_orig: .long  0x0C0AB7B0
 
 ! ---------------------------------------------------------------- bomb gauge
@@ -897,6 +904,9 @@ bomb_wrap:
         bt      1f
         bsr     bombcancel
         nop
+        mov.l   Lbw_vars,r1
+        mov     #90,r0
+        mov.l   r0,@(32,r1)         ! about 1.5 s of protection
         mov.l   @r15+,r5
         mov.l   @r15+,r4
         lds.l   @r15+,pr
@@ -910,6 +920,7 @@ bomb_wrap:
         nop
         .align  2
 Lbw_orig: .long 0x0C05DB30
+Lbw_vars: .long 0x0C7CF000
 
 
 ! The bomb button path starts the big bomb blast with 0x0C0602A0(r4); skip it in ARRANGE Ultra.
@@ -948,6 +959,32 @@ bombgo_wrap:
         nop
         .align  2
 Lbg_orig: .long 0x0C0E3B90
+
+! "Is she invulnerable?" check (0x0C05F9F0, used by the three hit paths): while the bomb protection
+! counter runs, report invulnerable.
+        .global inv_wrap
+inv_wrap:
+        sts.l   pr,@-r15
+        mov.l   r4,@-r15
+        bsr     active
+        nop
+        mov.l   @r15+,r4
+        tst     r0,r0
+        bt      1f
+        mov.l   Li_vars,r1
+        mov.l   @(32,r1),r0
+        cmp/pl  r0
+        bf      1f
+        lds.l   @r15+,pr
+        rts
+        mov     #1,r0
+1:      lds.l   @r15+,pr
+        mov.l   Li_orig,r0
+        jmp     @r0
+        nop
+        .align  2
+Li_vars: .long 0x0C7CF000
+Li_orig: .long 0x0C05F9F0
 
 bombcancel:
         sts.l   pr,@-r15
