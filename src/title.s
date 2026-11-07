@@ -919,6 +919,24 @@ bombfx_wrap:
         .align  2
 Lbf_orig: .long 0x0C0602A0
 
+! 0x0C0E3B90 launches the thrown bomb ball (whose blast is the cyan cloud) and returns non-zero.
+! In ARRANGE Ultra report success without launching anything.
+        .global bombgo_wrap
+bombgo_wrap:
+        sts.l   pr,@-r15
+        bsr     active
+        nop
+        lds.l   @r15+,pr
+        tst     r0,r0
+        bt      1f
+        rts
+        mov     #1,r0
+1:      mov.l   Lbg_orig,r0
+        jmp     @r0
+        nop
+        .align  2
+Lbg_orig: .long 0x0C0E3B90
+
 bombcancel:
         sts.l   pr,@-r15
         mov.l   r8,@-r15
