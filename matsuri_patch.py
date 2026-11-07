@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Mushihimesama Matsuri Arrange (Cave CV1000) - patch build 13
+Mushihimesama Matsuri Arrange (Cave CV1000) - patch build 14
 
 Usage:
     python3 matsuri_patch.py matsuri15.zip              -> writes matsuriarr_u4 next to the zip
@@ -9,13 +9,13 @@ Usage:
     python3 matsuri_patch.py matsuri15.zip -o OUT       -> writes the patched matsuriarr_u4 to OUT
     python3 matsuri_patch.py u4                      -> a loose original u4 works too (no --zip)
 
-The original u4 must have CRC32 6af99f0e; the result is checked to be 41dbfde1.
+The original u4 must have CRC32 6af99f0e; the result is checked to be 381abb57.
 Only the Python standard library is used.
 """
 import argparse, base64, os, sys, zipfile, zlib
 
 ORIG_CRC = 0x6AF99F0E
-PATCHED_CRC = 0x41DBFDE1
+PATCHED_CRC = 0x381ABB57
 U4_SIZE = 0x200000
 OUT_NAME = "matsuriarr_u4"
 SET_NAME = "mushimatsuriarr.zip"
@@ -34,7 +34,7 @@ PATCHES = [
         "ACAgICAgICAgICBBSEVWRiBOVSEhICEgICAgICAgIAAAICAgICAgICAgICAgICAgICAgICAgICAg"
         "ICAgICAgAAAgICAgICAgIA==")),
     (0x169904, base64.b64decode(
-        "ICAyIDIwLzYxMTcvTSBUQVVTSVJBIFJSTkFFRyAg")),
+        "ICAyIDIwLzYxMTgvTSBUQVVTSVJBIFJSTkFFRyAg")),
     (0x1FBE00, base64.b64decode(
         "BdEG0gbTFmAQQwIi+48EcgLQK0AJAAkAH6CAvnwMAAAAACIC")),
     (0x1FBE80, base64.b64decode(
@@ -82,7 +82,7 @@ PATCHES = [
 
 # MiSTer MRA (the matsuriarr_u4 CRC is filled in from PATCHED_CRC when written)
 MRA_TEMPLATE = """<!--
-  ikacore_CV1k MRA - Mushihimesama Matsuri Arrange (2026/11/7 MATSURI ARRANGE).
+  ikacore_CV1k MRA - Mushihimesama Matsuri Arrange (2026/11/8 MATSURI ARRANGE).
   Converted from the community MRA (same set, zip names, CRCs and
   <about>) to the DDR3-direct delivery format, 2026-09-17.
 
@@ -111,7 +111,7 @@ MRA_TEMPLATE = """<!--
 -->
 <misterromdescription>
     <about author="ika-musume" source="https://github.com/ika-musume/ikacore_CV1k"/>
-    <name>Mushihimesama Matsuri Arrange (2026/11/7 MATSURI ARRANGE)</name>
+    <name>Mushihimesama Matsuri Arrange (2026/11/8 MATSURI ARRANGE)</name>
     <setname>mushimatsuriarr</setname>
     <year>2026</year>
     <manufacturer>Cave</manufacturer>
@@ -132,8 +132,8 @@ MRA_TEMPLATE = """<!--
     <nvram index="3" size="135680"/>
 
     <rom index="0" zip="mushimatsuriarr.zip" md5="none">
-        <part name="matsuriarr_u4" crc="41dbfde1"/>
-        <part name="matsuriarr_u4" crc="41dbfde1"/>
+        <part name="matsuriarr_u4" crc="381abb57"/>
+        <part name="matsuriarr_u4" crc="381abb57"/>
     </rom>
 
     <buttons names="Shot,Bomb,Rapid Shot,Weapon Change,Start,Coin,Test,Service,Save State" default="A,B,X,Y,Start,R,L,Select"/>
@@ -172,7 +172,7 @@ def mra_text():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Patch Mushihimesama Matsuri 1.5 u4 into matsuriarr_u4 (Matsuri Arrange, build 13)")
+    ap = argparse.ArgumentParser(description="Patch Mushihimesama Matsuri 1.5 u4 into matsuriarr_u4 (Matsuri Arrange, build 14)")
     ap.add_argument("input", help="matsuri15.zip or a loose original u4 file")
     ap.add_argument("-o", "--output", help="where to write matsuriarr_u4")
     ap.add_argument("--zip", action="store_true", help="also write mushimatsuriarr.zip (input must be a zip)")

@@ -9,7 +9,7 @@ While Claude was used I put effort in making sure there are balanced gameplay.<b
 I did all the testing and planning.
 
 ## Change Notes
-- **Warning screen.** Shows a disclaimer that this is an unofficial project, `HAVE FUN!!!` and `2026/11/7 MATSURI ARRANGE`, both centred, all in capitals.
+- **Warning screen.** Shows a disclaimer that this is an unofficial project, `HAVE FUN!!!` and `2026/11/8 MATSURI ARRANGE`, both centred, all in capitals.
 - **Title menu.** After a coin is inserted, the title shows **CAVE MATSURI 1.5 / MATSURI ARRANGE** above `PRESS 1P OR 2P START` and `CREDITS`, which move down.
   - Move the arrow with the joystick up and down. It starts on CAVE MATSURI 1.5 every time; that is the unpatched game.
   - The ranking line at the bottom is hidden once a coin is in; the attract screen keeps it.
@@ -33,7 +33,7 @@ Needs Python 3 only. Download `matsuri_patch.py`, then run:
 ```
 python3 matsuri_patch.py matsuri15.zip --zip --mra
 ```
-This writes `matsuriarr_u4` (CRC `41dbfde1`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
+This writes `matsuriarr_u4` (CRC `381abb57`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
 
 ### Using the patched files
 - **MAME:** copy your matsuri15 set, replace its u4 with `matsuriarr_u4`; the checksum warning is expected.
