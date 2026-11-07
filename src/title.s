@@ -904,7 +904,12 @@ bomb_wrap:
         bt      1f
         bsr     bombcancel
         nop
-        mov.l   Lbw_vars,r1
+        tst     r10,r10             ! r10 = the hit path's flag: auto-bomb has no shout of its own
+        bt      3f
+        mov.l   Lbw_shout,r0
+        jsr     @r0
+        nop
+3:      mov.l   Lbw_vars,r1
         mov     #90,r0
         mov.l   r0,@(32,r1)         ! about 1.5 s of protection
         mov.l   @r15+,r5
@@ -921,6 +926,7 @@ bomb_wrap:
         .align  2
 Lbw_orig: .long 0x0C05DB30
 Lbw_vars: .long 0x0C7CF000
+Lbw_shout: .long 0x0C0E2330
 
 
 ! The bomb button path starts the big bomb blast with 0x0C0602A0(r4); skip it in ARRANGE Ultra.

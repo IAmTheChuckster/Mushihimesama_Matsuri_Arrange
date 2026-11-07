@@ -21,7 +21,7 @@ I did all the testing and planning.
   - **Weapon change.** The 4th button (shown as `Weapon Change` in the MiSTer MRA, Y by default) switches player 1 to the next weapon on the fly: 1 → 2 → 3 → 1. The weapon is rebuilt with the game's own routine, so shot, laser and colour all change, and power, bombs and score are kept. Each change plays the sound test's SE code 17.
   - **Straight into the game.** Choosing MATSURI ARRANGE runs through mode select (ULTRA) and shot select (top-right weapon) by itself and starts the game; change weapons in play with the 4th button.
   - **Bomb cancels bullets.** The bomb button (and the automatic bomb when you are hit) no longer does the normal bomb: it uses one bomb and turns every enemy bullet on screen into a small crystal gem, with no damage to enemies. She no longer throws the bomb ball, so there is no blast; you are invulnerable for about 1.5 seconds after using it (no shield bubble is shown). Nothing happens with 0 bombs.
-  - **Bomb gauge.** For every 2000 counter points one gold swirl fills one of the 6 right-hand slots of the bomb bar, from the right edge to the left; at 12000 a bomb is added (maximum 6), she gives her bomb shout, and the slots empty. The glyphs slide with the bar when it moves (boss start, score tally).
+  - **Bomb gauge.** For every 2000 counter points one gold swirl fills one of the 6 right-hand slots of the bomb bar, from the right edge to the left; at 12000 a bomb is added (maximum 6), she gives her bomb shout (the automatic bomb when you are hit gives it too), and the slots empty. The glyphs slide with the bar when it moves (boss start, score tally).
 
 ## Patching the game
 
@@ -33,7 +33,7 @@ Needs Python 3 only. Download `matsuri_patch.py`, then run:
 ```
 python3 matsuri_patch.py matsuri15.zip --zip --mra
 ```
-This writes `matsuriarr_u4` (CRC `381abb57`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
+This writes `matsuriarr_u4` (CRC `c59eb055`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
 
 ### Using the patched files
 - **MAME:** copy your matsuri15 set, replace its u4 with `matsuriarr_u4`; the checksum warning is expected.
