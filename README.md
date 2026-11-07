@@ -4,7 +4,7 @@ A gameplay patch for `Mushihime-Sama Ver 1.5 (Japan, 2011/5/23 CAVEMATSURI VER1.
 This repository holds only source, tools and notes. **No ROM data is included**; you patch your own legally owned dump.
 ## To Do:
 1. Import Original Music
-2. Create arrange mode based on the 360 arrange
+
 
    
 ## About
