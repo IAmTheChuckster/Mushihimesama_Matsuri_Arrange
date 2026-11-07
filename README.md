@@ -2,10 +2,6 @@
 
 A gameplay patch for `Mushihime-Sama Ver 1.5 (Japan, 2011/5/23 CAVEMATSURI VER1.5)`<br>
 This repository holds only source, tools and notes. **No ROM data is included**; you patch your own legally owned dump.
-## To Do:
-1. Import Original Music
-
-
    
 ## About
 Why did I make this? Because it's fun and for my own personal research to see the capabilities of Claude.<br>
