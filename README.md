@@ -28,7 +28,7 @@ I did all the testing and planning.
 
 ## Patching the game
 
-### With the web patcher (easiest)
+### Web Patcher
 Open the **[Web Patcher](https://iamthechuckster.github.io/Mushihimesama_Matsuri_Arrange/)** (`index.html`) and drop in your `matsuri15.zip`. It checks the file names and CRCs, builds the patched files automatically, and lets you download just the patched files or a complete `mushimatsuriarr.zip` romset. Everything runs in your browser; nothing is uploaded.
 
 ### With Python
