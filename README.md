@@ -33,7 +33,7 @@ Needs Python 3 only. Download `matsuri_patch.py`, then run:
 ```
 python3 matsuri_patch.py matsuri15.zip --zip --mra
 ```
-This writes `matsuriarr_u4` (CRC `e4b3b80b`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
+This writes `matsuriarr_u4` (CRC `d3b46268`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
 
 ### Using the patched files
 - **MAME:** copy your matsuri15 set, replace its u4 with `matsuriarr_u4`; the checksum warning is expected.

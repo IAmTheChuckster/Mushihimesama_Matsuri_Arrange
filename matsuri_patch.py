@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Mushihimesama Matsuri Arrange (Cave CV1000) - patch build 16
+Mushihimesama Matsuri Arrange (Cave CV1000) - patch build 17
 
 Usage:
     python3 matsuri_patch.py matsuri15.zip              -> writes matsuriarr_u4 next to the zip
@@ -9,13 +9,13 @@ Usage:
     python3 matsuri_patch.py matsuri15.zip -o OUT       -> writes the patched matsuriarr_u4 to OUT
     python3 matsuri_patch.py u4                      -> a loose original u4 works too (no --zip)
 
-The original u4 must have CRC32 6af99f0e; the result is checked to be e4b3b80b.
+The original u4 must have CRC32 6af99f0e; the result is checked to be d3b46268.
 Only the Python standard library is used.
 """
 import argparse, base64, os, sys, zipfile, zlib
 
 ORIG_CRC = 0x6AF99F0E
-PATCHED_CRC = 0xE4B3B80B
+PATCHED_CRC = 0xD3B46268
 U4_SIZE = 0x200000
 OUT_NAME = "matsuriarr_u4"
 SET_NAME = "mushimatsuriarr.zip"
@@ -36,7 +36,7 @@ PATCHES = [
     (0x169904, base64.b64decode(
         "ICAyIDIwLzYxMTgvTSBUQVVTSVJBIFJSTkFFRyAg")),
     (0x1FBE00, base64.b64decode(
-        "BdEG0gbTFmAQQwIi+48EcgLQK0AJAAkAH6CAvnwMAAAAABIC")),
+        "BdEG0gbTFmAQQwIi+48EcgLQK0AJAAkAH6CAvnwMAAAAAAwC")),
     (0x1FBE80, base64.b64decode(
         "DNEWYigiBokWYxZkImUwNfeL9q9CIgXRAOACIQERAhEEEQURBhEC0CtACQB8DADwBQxwmXwMTAcG"
         "0AJgBtERUigiBYkoMAPiJjABiQsAAeALAADgAAzYJHwMAPAiT0YvVi9mL3Yvhi+WL6YvH9ESaB/Z"
@@ -74,8 +74,7 @@ PATCHES = [
         "DDg3BQzYSHwMbAEKDEQ3BQx0TXwMgAEKDAwhBQzYSHwMnAEKDAQiBQzYSHwMnAEKDBAhBQx0TXwM"
         "sgEFDPy2BQzw/HwM8AEKDMC/Cgywt3wMbAIFDPiaBQwwQ3wMaAQFDFCZBQxgQnwMbgQKDJBnhi+W"
         "LwHQK0AKDJRnpi+2LwkACQAKDJhnxi/WL3wMuAQKDDBshi+WLwHQK0AKDDRspi+2LwkACQAKDDhs"
-        "xi/WL3wMvgQFDLz+BQww23wMZAYFDGjxBgygAnwMsAYFDJjtBgygAnwMsAYFDLj+DgyQO3wM0AYA"
-        "AAAAAAAAAAAAAAA=")),
+        "xi/WL3wMvgQFDLz+BQww23wMZAYFDLj+DgyQO3wM0AYAAAAAAAAAAAAAAAA=")),
 ]
 
 
@@ -131,8 +130,8 @@ MRA_TEMPLATE = """<!--
     <nvram index="3" size="135680"/>
 
     <rom index="0" zip="mushimatsuriarr.zip" md5="none">
-        <part name="matsuriarr_u4" crc="e4b3b80b"/>
-        <part name="matsuriarr_u4" crc="e4b3b80b"/>
+        <part name="matsuriarr_u4" crc="d3b46268"/>
+        <part name="matsuriarr_u4" crc="d3b46268"/>
     </rom>
 
     <buttons names="Shot,Bomb,Rapid Shot,Weapon Change,Start,Coin,Test,Service,Save State" default="A,B,X,Y,Start,R,L,Select"/>
@@ -171,7 +170,7 @@ def mra_text():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Patch Mushihimesama Matsuri 1.5 u4 into matsuriarr_u4 (Matsuri Arrange, build 16)")
+    ap = argparse.ArgumentParser(description="Patch Mushihimesama Matsuri 1.5 u4 into matsuriarr_u4 (Matsuri Arrange, build 17)")
     ap.add_argument("input", help="matsuri15.zip or a loose original u4 file")
     ap.add_argument("-o", "--output", help="where to write matsuriarr_u4")
     ap.add_argument("--zip", action="store_true", help="also write mushimatsuriarr.zip (input must be a zip)")

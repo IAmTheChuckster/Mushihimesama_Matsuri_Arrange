@@ -49,8 +49,8 @@
     <nvram index="3" size="135680"/>
 
     <rom index="0" zip="mushimatsuriarr.zip" md5="none">
-        <part name="matsuriarr_u4" crc="e4b3b80b"/>
-        <part name="matsuriarr_u4" crc="e4b3b80b"/>
+        <part name="matsuriarr_u4" crc="d3b46268"/>
+        <part name="matsuriarr_u4" crc="d3b46268"/>
     </rom>
 
     <buttons names="Shot,Bomb,Rapid Shot,Weapon Change,Start,Coin,Test,Service,Save State" default="A,B,X,Y,Start,R,L,Select"/>
