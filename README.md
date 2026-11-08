@@ -45,8 +45,6 @@ This writes `matsuriarr_u4` (CRC `d3b46268`), `mushimatsuriarr.zip` (u2, u23, u2
 ### Building from source
 `python3 src/build.py matsuri15.zip OUT_u4` (needs `binutils-sh4-linux-gnu`), then `python3 src/update_patchers.py matsuri15.zip OUT_u4 BUILD`.
 
-## Skills
-
 ## Testing
 This patch was tested with MAME 0.289 and [CV1k core for the MiSTer FPGA by Raki](https://www.patreon.com/c/ikamusume/posts)<br>
 It may even work on a PCB but do so on your own risk.
