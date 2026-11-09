@@ -10,7 +10,7 @@ I did all the testing and planning.
 
 ## To Do
 1. see about removing the mode select and force ultra max
-2. bomb refill charge says "やった"
+2. bomb refill charge says「やった」
 3. mode select highlights gold
 
 ## Change Notes
