@@ -1,5 +1,5 @@
 <!--
-  ikacore_CV1k MRA - Mushihimesama Matsuri Arrange (2026/11/8 MATSURI ARRANGE).
+  ikacore_CV1k MRA - Mushihimesama Matsuri Arrange (2026/11/10 MATSURI ARRANGE).
   Converted from the community MRA (same set, zip names, CRCs and
   <about>) to the DDR3-direct delivery format, 2026-09-17.
 
@@ -28,7 +28,7 @@
 -->
 <misterromdescription>
     <about author="ika-musume" source="https://github.com/ika-musume/ikacore_CV1k"/>
-    <name>Mushihimesama Matsuri Arrange (2026/11/8 MATSURI ARRANGE)</name>
+    <name>Mushihimesama Matsuri Arrange (2026/11/10 MATSURI ARRANGE)</name>
     <setname>mushimatsuriarr</setname>
     <year>2026</year>
     <manufacturer>Cave</manufacturer>
@@ -49,8 +49,8 @@
     <nvram index="3" size="135680"/>
 
     <rom index="0" zip="mushimatsuriarr.zip" md5="none">
-        <part name="matsuriarr_u4" crc="d3b46268"/>
-        <part name="matsuriarr_u4" crc="d3b46268"/>
+        <part name="matsuriarr_u4" crc="763ebfba"/>
+        <part name="matsuriarr_u4" crc="763ebfba"/>
     </rom>
 
     <buttons names="Shot,Bomb,Rapid Shot,Weapon Change,Start,Coin,Test,Service,Save State" default="A,B,X,Y,Start,R,L,Select"/>

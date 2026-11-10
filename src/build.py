@@ -30,7 +30,7 @@ def warning_lines():
     lines = ["  " + t for t in body]
     lines += [""] * (14 - len(lines))
     lines[9] = ctr("HAVE FUN!!!")
-    lines[13] = ctr("2026/11/8 MATSURI ARRANGE")
+    lines[13] = ctr("2026/11/10 MATSURI ARRANGE")
     return [l.ljust(30) for l in lines]
 
 

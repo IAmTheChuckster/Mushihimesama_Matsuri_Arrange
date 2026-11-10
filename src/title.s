@@ -114,19 +114,29 @@ title_wrap:
         bt      3f
         mov     #1,r0
         mov.l   r0,@(8,r9)
-3:      mov.l   Lt_draw,r10
+3:      mov.l   Lt_cp,r1
+        mov.l   @r1,r1
+        mov.l   r1,@-r15            ! the game's current text colour
+        mov.l   Lt_draw,r10
+        bsr     tcol                ! the selected title is drawn in gold
+        mov     #0,r1
         mov     #56,r4
         mov.l   Lt_y1,r5
         mov.l   Lt_z,r6
         mova    S_item0,r0
         jsr     @r10
         mov     r0,r7
+        bsr     tcol
+        mov     #1,r1
         mov     #56,r4
         mov.l   Lt_y2,r5
         mov.l   Lt_z,r6
         mova    S_item1,r0
         jsr     @r10
         mov     r0,r7
+        mov.l   @r15+,r1            ! normal colour back (the arrow stays white)
+        mov.l   Lt_cp,r2
+        mov.l   r1,@r2
         mov.l   @(8,r9),r0
         tst     r0,r0
         mov.l   Lt_y1,r5
@@ -147,8 +157,21 @@ title_wrap:
         lds.l   @r15+,pr
         rts
         nop
+! r1 = menu item (0 or 1): set the game's text colour word to gold when it is the selected one
+tcol:   mov.l   @(8,r9),r0
+        cmp/eq  r1,r0
+        mov.l   Ltc_wh,r2
+        bf      1f
+        mov.l   Ltc_gold,r2
+1:      mov.l   Ltc_cp,r3
+        rts
+        mov.l   r2,@r3
         .align  2
+Ltc_wh:   .long 0x80808080
+Ltc_gold: .long 0x80FFB030
+Ltc_cp:   .long 0x0C054850
 Lt_T:    .long  0x0C0024D8
+Lt_cp:   .long  0x0C054850
 Lt_vars: .long  0x0C7CF000
 Lt_e1:   .long  0x0C05417C
 Lt_e2:   .long  0x0C0541C0
@@ -325,8 +348,7 @@ gem_wrap:
         mov.l   r3,@-r15
         mov.l   r4,@-r15
         mov.l   r5,@-r15
-        mov.l   Lg_shout,r0
-        jsr     @r0
+        bsr     shout92             ! the refill voice (id 0x92), not the bomb-button shout
         nop
         mov.l   @r15+,r5
         mov.l   @r15+,r4
@@ -344,7 +366,6 @@ Lg_full: .word  12000
 Lg_p1:   .long  0x0C1FBC0C
 Lg_vars: .long  0x0C7CF000
 Lg_orig: .long  0x0C05FCF0
-Lg_shout: .long 0x0C0E2330
 
 ! ---------------------------------------------------------------- counter display
 ! Wraps the in-game per-frame callback (0x0C0AB7B0).
@@ -945,6 +966,66 @@ bombfx_wrap:
         nop
         .align  2
 Lbf_orig: .long 0x0C0602A0
+
+! Copy of the game's shout helper 0x0C0E2330 with sound id 0x92 (the bomb-refill voice).
+! The original waits forever when the queue is busy; this copy gives up instead.
+        .global shout92
+shout92:
+        mov.l   r14,@-r15
+        mov.l   Ls_idx,r2
+        mov     r15,r14
+        mov.l   @r2,r4
+        mov     r4,r2
+        mov.l   Ls_buf,r0
+        shll2   r2
+        add     r4,r2
+        mov.l   Ls_busy,r3
+        add     r0,r2
+        mov.l   @r3,r0
+        tst     r0,r0
+        bt      1f
+        mov.l   @r15+,r14
+        rts
+        nop
+1:      mov     #1,r3
+        mov.l   Ls_flag,r7
+        mov.l   r3,@r7
+        add     #4,r2
+        mov     #7,r6
+        mov.b   r6,@r2
+        mov     #48,r4
+        mov.w   Ls_id,r5
+        add     #-4,r2
+        mov.b   r5,@r2
+        mov     #2,r3
+        add     #2,r2
+        mov.b   r4,@r2
+        mov     #127,r5
+        mov.w   Ls_fd,r0
+        add     #1,r2
+        mov.b   r0,@r2
+        add     #-2,r2
+        mov.b   r3,@r2
+        mov.l   Ls_idx,r3
+        mov.l   @r3,r6
+        add     #1,r6
+        cmp/gt  r5,r6
+        bf/s    3f
+        mov.l   r6,@r3
+        mov     #0,r2
+        mov.l   r2,@r3
+3:      mov     #0,r0
+        mov.l   r0,@r7
+        mov     r14,r15
+        rts
+        mov.l   @r15+,r14
+        .align  2
+Ls_id:   .word 0x92
+Ls_fd:   .word 0xFD
+Ls_idx:  .long 0x0C2DCB54
+Ls_buf:  .long 0x0C2DCB58
+Ls_busy: .long 0x0C2DCB48
+Ls_flag: .long 0x0C2DCB4C
 
 ! 0x0C0E3B90 launches the thrown bomb ball (whose blast is the cyan cloud) and returns non-zero.
 ! In ARRANGE Ultra report success without launching anything.

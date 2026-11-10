@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Mushihimesama Matsuri Arrange (Cave CV1000) - patch build 17
+Mushihimesama Matsuri Arrange (Cave CV1000) - patch build 18
 
 Usage:
     python3 matsuri_patch.py matsuri15.zip              -> writes matsuriarr_u4 next to the zip
@@ -9,13 +9,13 @@ Usage:
     python3 matsuri_patch.py matsuri15.zip -o OUT       -> writes the patched matsuriarr_u4 to OUT
     python3 matsuri_patch.py u4                      -> a loose original u4 works too (no --zip)
 
-The original u4 must have CRC32 6af99f0e; the result is checked to be d3b46268.
+The original u4 must have CRC32 6af99f0e; the result is checked to be 763ebfba.
 Only the Python standard library is used.
 """
 import argparse, base64, os, sys, zipfile, zlib
 
 ORIG_CRC = 0x6AF99F0E
-PATCHED_CRC = 0xD3B46268
+PATCHED_CRC = 0x763EBFBA
 U4_SIZE = 0x200000
 OUT_NAME = "matsuriarr_u4"
 SET_NAME = "mushimatsuriarr.zip"
@@ -34,53 +34,56 @@ PATCHES = [
         "ACAgICAgICAgICBBSEVWRiBOVSEhICEgICAgICAgIAAAICAgICAgICAgICAgICAgICAgICAgICAg"
         "ICAgICAgAAAgICAgICAgIA==")),
     (0x169904, base64.b64decode(
-        "ICAyIDIwLzYxMTgvTSBUQVVTSVJBIFJSTkFFRyAg")),
+        "ICAwMjYyMS8vMTAxTSBUQVVTSVJBIFJSTkFFRyAg")),
     (0x1FBE00, base64.b64decode(
-        "BdEG0gbTFmAQQwIi+48EcgLQK0AJAAkAH6CAvnwMAAAAAAwC")),
+        "BdEG0gbTFmAQQwIi+48EcgLQK0AJAAkAH6CAvnwMAAAAADUC")),
     (0x1FBE80, base64.b64decode(
-        "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")),
+        "DNEWYigiBokWYxZkImUwNfeL9q9CIgXRAOACIQERAhEEEQURBhEC0CtACQB8DADwBQxwmXwM8AcG"
+        "0AJgBtERUigiBYkoMAPiJjABiQsAAeALAADgAAzYJHwMAPAiT0YvVi9mL3Yvhi+WL6YvK9ESaCzZ"
+        "kVKBGYNjKDMD4AYzAYsA4AIZAOAEGSfREmIn0RJjOyIB4AgiAokA4AWgAhkC4AgiAYkB4AIZHdES"
+        "YRYvINolsADhOOQf1SDWIscLSgNnHbAB4TjkHNUc1iPHC0oDZ/ZhE9ISIpJQCCAW1QCJFtUo5BbW"
+        "IMcLSgNn9mr2afZo9mf2ZvZl9mQmTwsACQCSUBAwA9IAiwPSA9MLACIjCQCAgICA/4AwsAUMUEgA"
+        "DNgkBQxQSHwMAPAFDHxBBQzAQQUM2EgAAOQAAADwAAAA+gAKDOAtQUNFVk0gVEFVU0lSMSA1LgAA"
+        "CQBBTVNUUlUgSVJBQVJHTgBFAD4JAAjQADcLiyJPRi9WL2Yvb792L/Zn9mb2ZfZkJk8WdQTQK0AJ"
+        "ABYMxJsADNgkfAwA8AUM2EgqA0m/CQAqQwggAIkWdQbQK0AJACoDP78JACpDCCAAiRZ1AtArQAkA"
+        "BQzYSAUMdE0qAzG/CQAqQwggAYkLAAkABtArQAkAKgMmvwkAKkMIIAGJCwAJAALQK0AJAAUM2EgF"
+        "DHRNBdESUAGIBYsE0RJgAogBiwsAAeALAADgfAwA8B8MMLYiT0YvVi/rvwkA9mX2ZAggIYkW0AA0"
+        "HosD4AY1G4kQx1NhHDEdARLSJFMcMxyREjMQixgzQ1AG4RMwC4kBcAMUJi82L0YvVi9IsgkA9mX2"
+        "ZPZj9mI0EiZPBtArQAkACQABAAUACgAPAOAuCQAfDAy8fAwA8AUM8PwiT0YvVi9mL3Yvrb8JAAgg"
+        "A4mzsAkAG7AJAPZn9mb2ZfZkJk8J0CtACQAJAAAAECcAAOgDAABkAAAACgDAACwB+gAJAHwMAPAF"
+        "DHRNCgywtyJPhi+WL6YvJNEUUj+TAOgyMgKLODL7rwF4BuAHOACLA2iIKBSJAOkylZNgCEAIQAg1"
+        "KEVTaiyWKEYd0RRSLDYVUiw2JpQJsAkAAXmAOeuL9mr2afZoJk8LAAkAIk8blw/QC0AJAANkRi8P"
+        "1Q3QC0AJAPJkAOH8fxIvAuUD5gyXCtALQAkACH8mTwsACQDQB9wACAAeBh8GAAH/AHwMAPAFDDCf"
+        "BQzMVf8AMJgFDMhWLQyEygrRE1AK0iAwDosXUASIBYkFiAmLB9IB4wKgMiIC4zoRBdESYBDLAiEL"
+        "AAkALQxwr0NNAFheDGDpBQx8QQrRE1AK0iAwDosXUAiIC4sJ0RJgA4gHiwDiIhEB4i8RBNESYBDL"
+        "AiELAAkALQxwr0NNAFgFDHxBLQygySJPGNESYimTOSIX1EZVJhQoIh6JWCUcixTUIJBOBhTREjYW"
+        "ixPREjYTiUZSAXID4RIyAIsA4iYUJxQRkCYGD9ALQGNkBuQHlTfmBpcK0AtACQAmTwsACQBbAFoA"
+        "gADcAJgACQAFDHhBfAwA8B8MDLwADAAAAA0AAAUMPJIJDMDNDdABoAkADdAiTwtACQAM0RJQAYgM"
+        "iwvSC9ESYCkgAiEK0RJgKSACIW6/CQCKvwkAJk8LAAkACQAFDDBDBQxgQnwMAPD///9/BQywQQUM"
+        "vEEQ0AGgCQAQ0AYvIk9GL1YvZi92Lw3RFVAIIAaLfr4JAAggAokK0AtACQD2Z/Zm9mX2ZCZP9mCG"
+        "L5Yvpi+2L8YvK0DWLwoMnGcKDDxsfAwA8HwMPAUiT4Yvli+mL7Yvxi/WL+YvGdEB4AURQOAHERjQ"
+        "Amu4KxqJF9oA6ADpRi9WLyKeAOAosAYvDH+TOA6Jg2AIQABArDACYQFSAXgWLyYvE54B4BiwBi/v"
+        "rwx/B9EA4AUR9m72bfZs9mv2avZp9mgmTwsACQAJAAAJAAR8DADwGQxAzH0MAAAiTy/QvgzILFSJ"
+        "wm3EUfNSKDEpQR9hxVLyUzgyKUIvYijTMmMTYBFAAIkLYDIwP4kjYBFAAIkLYDIwOYkfIRoBLyIa"
+        "Aiwx5jEyicRRxVI1kAM5BomTYAhAAECsMBIgIRABeRYvJi+zZBfQC0DDZfZl9mTxUAggDosB4AYv"
+        "Bi8ekAYvAuAGLwYvfeYA5w/QC0AJAA2gFH8B4AYvAeAGLwLgBi8GL33mAOcJ0AtACQAQf6mv02wm"
+        "TwsACQAJAAAIAAMHAATgfAwc8AgMQPEKDJBnCgwwbCJPRi9WL7O9CQAIIBGJdbAJAKgqAokM0AtA"
+        "CQBa4xGQjgIyMgCJNgj2ZfZkJk8LAAkA9mX2ZCZPAdArQAkACQAFDDDb1AAJAA4MMCMiT0Yvjr0J"
+        "AAgg9mQmTwGJCwAA4AHQK0AJAAkABgygAuYvGNLzbiJkQ2IX0AhCTDIW0wwyMmAIIAKJ9m4LAAkA"
+        "AeMT1zInBHIH5mAiMOQXlfxyUCIC4wJyQCJ/5RGQAXIAIv5yMCIH0zJmAXZXNgKPYiMA4iIjAOAC"
+        "J+NvCwD2bpIA/QAtDFTLLQxYyy0MSMstDEzLIk9FvQkAJk8IIAGJCwAB4AHQK0AJAAkADgyQOyJP"
+        "hi+WL6Yvti/GL9Yv5i8Q0QHgBREO0AcRD9ACa7grCYkO2gDoAOkA4AYvBi//7v6+Bi8MfwfRAOAF"
+        "EfZu9m32bPZr9mr2afZoJk8LAAkAAAD/f3wMAPAZDEDMfQwAAAoM4DEFDNhIfAxsAQoMODcFDNhI"
+        "fAygAQoMRDcFDHRNfAy0AQoMDCEFDNhIfAzQAQoMBCIFDNhIfAzQAQoMECEFDHRNfAzmAQUM/LYF"
+        "DPD8fAwkAgoMwL8KDLC3fAycAgUM+JoFDDBDfAyYBAUMUJkFDGBCfAyeBAoMkGeGL5YvAdArQAoM"
+        "lGemL7YvCQAJAAoMmGfGL9YvfAzoBAoMMGyGL5YvAdArQAoMNGymL7YvCQAJAAoMOGzGL9YvfAzu"
+        "BAUMvP4FDDDbfAyUBgUMuP4ODJA7fAx0BwAAAAAAAAAAAAAAAA==")),
 ]
 
 
 # MiSTer MRA (the matsuriarr_u4 CRC is filled in from PATCHED_CRC when written)
 MRA_TEMPLATE = """<!--
-  ikacore_CV1k MRA - Mushihimesama Matsuri Arrange (2026/11/8 MATSURI ARRANGE).
+  ikacore_CV1k MRA - Mushihimesama Matsuri Arrange (2026/11/10 MATSURI ARRANGE).
   Converted from the community MRA (same set, zip names, CRCs and
   <about>) to the DDR3-direct delivery format, 2026-09-17.
 
@@ -109,7 +112,7 @@ MRA_TEMPLATE = """<!--
 -->
 <misterromdescription>
     <about author="ika-musume" source="https://github.com/ika-musume/ikacore_CV1k"/>
-    <name>Mushihimesama Matsuri Arrange (2026/11/8 MATSURI ARRANGE)</name>
+    <name>Mushihimesama Matsuri Arrange (2026/11/10 MATSURI ARRANGE)</name>
     <setname>mushimatsuriarr</setname>
     <year>2026</year>
     <manufacturer>Cave</manufacturer>
@@ -130,8 +133,8 @@ MRA_TEMPLATE = """<!--
     <nvram index="3" size="135680"/>
 
     <rom index="0" zip="mushimatsuriarr.zip" md5="none">
-        <part name="matsuriarr_u4" crc="d3b46268"/>
-        <part name="matsuriarr_u4" crc="d3b46268"/>
+        <part name="matsuriarr_u4" crc="763ebfba"/>
+        <part name="matsuriarr_u4" crc="763ebfba"/>
     </rom>
 
     <buttons names="Shot,Bomb,Rapid Shot,Weapon Change,Start,Coin,Test,Service,Save State" default="A,B,X,Y,Start,R,L,Select"/>
@@ -170,7 +173,7 @@ def mra_text():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Patch Mushihimesama Matsuri 1.5 u4 into matsuriarr_u4 (Matsuri Arrange, build 17)")
+    ap = argparse.ArgumentParser(description="Patch Mushihimesama Matsuri 1.5 u4 into matsuriarr_u4 (Matsuri Arrange, build 18)")
     ap.add_argument("input", help="matsuri15.zip or a loose original u4 file")
     ap.add_argument("-o", "--output", help="where to write matsuriarr_u4")
     ap.add_argument("--zip", action="store_true", help="also write mushimatsuriarr.zip (input must be a zip)")
