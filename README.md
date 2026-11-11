@@ -9,7 +9,8 @@ While Claude was used I put effort in making sure there are balanced gameplay.<b
 I did all the testing and planning.
 
 ## To Do
-1. option to swap the music with Mushihimesama
+1. Add skill to move this from Claude Chat to Claude Code
+2. option to swap the music with Mushihimesama
 
 ## Change Notes
 - **Warning screen.** Shows a disclaimer that this is an unofficial project, `HAVE FUN!!!` and `2026/11/10 MATSURI ARRANGE`, both centred, all in capitals.
