@@ -29,7 +29,7 @@ Work on `main` is released as numbered builds; `wip` is the scratch branch.
 | 21 | アレンジモード banner (made as "build 20"; tested on MiSTer) | b59a048f | never committed |
 | 22 | banner also in the stage intro; patch.py rename; GOD step in index.html | 334b3e31 | never committed |
 | 23 | removed unused code (bombfx_wrap, old counter literals, json import, needProps); same features as 22 | 52dc79a6 | never committed |
-| 24 | warning screen and MRA date 2026/11/20; otherwise as 23 | c664efdb | current |
+| 24 | warning screen and MRA date 2026/11/20; otherwise as 23 | c664efdb | committed (7b22893) |
 - **Next build: 25.**
 
 ## How the patch runs
