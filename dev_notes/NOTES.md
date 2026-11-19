@@ -2,6 +2,8 @@
 
 No ROM data belongs in this repo, in the web page or in any release. Only source, changed-byte tables and notes.
 Work on `main` is released as numbered builds; `wip` is the scratch branch.
+`CLAUDE.md` (repo root) is the short version Claude Code loads at the start of every session: owner rules, inputs,
+build steps and MAME test setup. Keep it in step with these notes.
 
 ## Rules from the project owner
 - CAVE MATSURI (first title entry) stays unpatched. Every gameplay change is for MATSURI ARRANGE (Ultra) only.
