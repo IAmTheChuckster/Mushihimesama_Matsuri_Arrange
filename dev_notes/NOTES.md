@@ -13,15 +13,33 @@ Work on `main` is released as numbered builds; `wip` is the scratch branch.
 ## Inputs, outputs, build
 - Original: `matsuri15.zip` (Cave CV1000), u4 CRC `6af99f0e`. u4 stores 16-bit words byte-swapped; `build.py` edits the swapped ("natural") domain.
 - `python3 -I src/build.py matsuri15.zip OUT_u4` assembles `src/title.s` (SH-3, needs `sh-elf` binutils), applies the `SITES` table and prints the patched u4 CRC.
-- `python3 -I src/update_patchers.py matsuri15.zip OUT_u4 BUILD` embeds the changed bytes in `matsuri_patch.py` and `index.html` and rewrites the CRC in the MRA. Then update the CRC line in README.
-- Verify: `python3 -I matsuri_patch.py matsuri15.zip --zip --mra` and the web page (Playwright: upload the zip, click each download) must give a u4 identical to `OUT_u4`. The MRA must differ from the previous one only in the CRC.
+- `python3 -I src/update_patchers.py matsuri15.zip OUT_u4 BUILD` embeds the changed bytes in `patch.py` and `index.html` and rewrites the CRC in the MRA. Then update the CRC line and the "Current build" line in README.
+- Verify: `python3 -I patch.py matsuri15.zip --zip --mra` and the web page (Playwright: upload the zip, click each download) must give a u4 identical to `OUT_u4`. The MRA must differ from the previous one only in the CRC.
 - Commits end with the attribution lines the session gives. Build N commit message style: "Build N: what changed".
+
+## Build numbers
+- **Every patched `index.html` that is made gets the next higher build number**, committed or not (owner rule, 2026-11-19). Never reuse a number, even for a quick fix of a build that was only tested.
+- Build log (u4 CRC of the patched file):
+
+| Build | What | u4 CRC | State |
+|---|---|---|---|
+| 1-18 | see git history | | committed |
+| 19 | warning date 2026/11/12 | 0bc2595b | lost (uncommitted changes were reset) |
+| 20 | warning date 2026/11/19 (made as "build 19") | 89fad22f | never committed |
+| 21 | アレンジモード banner (made as "build 20"; tested on MiSTer) | b59a048f | never committed |
+| 22 | banner also in the stage intro; patch.py rename; GOD step in index.html | 334b3e31 | never committed |
+| 23 | removed unused code (bombfx_wrap, old counter literals, json import, needProps); same features as 22 | 52dc79a6 | never committed |
+| 24 | warning screen and MRA date 2026/11/20; otherwise as 23 | c664efdb | current |
+- **Next build: 25.**
 
 ## How the patch runs
 - A boot stub copies the patch to RAM `0x0C7C0000` and applies the sites table (address, expected old long, new long) in `build.py`. A site whose old long does not match aborts the build.
 - Patch variables at `0x0C7CF000`: +0 title stamp, +4 coin stamp, +8 mode (1 = ARRANGE), +16 hidden gem counter, +20 cancel busy, +24 4th-button previous state, +28 scan early-reject window (64 from the chain cancel, 0x7FFF from the bomb cancel), +32 unused.
 - Hooks wrap pool literals. `active` = (mode == 1 and game mode word `0x0C1FB630` == 2). Every wrapper must fall through to the original routine when not `active`.
-- Main hooks: `hud_wrap` (0x0C0ABFC0, per frame), `gem_wrap` (0x0C05B6FC wraps 0x0C05FCF0), `spawn_c_wrap` / `spawn_g_wrap` (gem spawners 0x0C0A6790 small crystal, 0x0C0A6C30 gold), poll wraps, and the bomb hooks below.
+- Main hooks: `hud_wrap` (0x0C0ABFC0, per frame), `gem_wrap` (0x0C05B6FC wraps 0x0C05FCF0), `spawn_c_wrap` / `spawn_g_wrap` (gem spawners 0x0C0A6790 small crystal, 0x0C0A6C30 gold), poll wraps, the bomb hooks below, and `end_wrap` (builds 21-22, banner).
+- **Banner (builds 21-22).** `end_wrap` replaces the literal at `0x0C054160` (the frame renderer `0x0C0540F0` closes its blitter list with `0x0C049E24(0xFFFFFFFF)`). When active and the picture is present it walks the list (`0x0C049B30` start, `0x0C049B3C` write pointer; ops 0x1 draw 20 bytes, 0x2 upload 16 + w*h*2, 0xC clip 4), points the two ウルトラモード draws (src 1304,768, w-1 7, h-1 63: shadow attr 0x1300 and text 0x1100) at VRAM 1320,840, then, only if it found them, appends an upload of the picture there (so frames without the banner, e.g. the title menu, get no upload; build 21 first required the gameplay HUD to have run, which left ウルトラモード showing during the stage intro) (`2000 0000 9999 9999 x y w-1 h-1` + 512 pixels, 8 px wide as all uploads must be a multiple of 8 wide on the MiSTer core).
+- **Banner picture.** u4 natural offset `0x1FF000` (CPU `0xA01FF000`): `ARG1` + 12 zero bytes + 8x64 ARGB1555 big-endian words (stored sideways like all VRAM art). It is NOT in the repo or the patchers: `patch.py` / `index.html` cut it from the user's 360 GOD package (`5F9DF6331EAE85814989`, /res/DISKDATA/C/h20.bin, Cave archive entry `0_00_B.tga`, Cave LZSS, 4096x4096 ARGB1555 bottom-up; アレンジモード at x 3153-3168, y 2708-2829, halved 2x2: opaque when 2+ of 4 opaque, grey = their average). `update_patchers.py` leaves that area out of the embedded data; the CRC covers it. Without the magic the banner stays ウルトラモード.
+- VRAM facts (MAME dump, 8192x4096): system sheets are uploaded once at boot and never change; the stage-graphics area (about y 2304-3000) and the framebuffers (top left, x 7424-7935 at the top) are rewritten. ウルトラモード is at 1304-1311 x 768-831; 1320-1327 x 840-903 (after オリジナルモード, where the 360 puts アレンジモード) is empty.
 
 ## Game addresses found
 - Player block `0x0C1FBC0C`: +8 lives, +12 bombs, +16 power, +20 level, +24 active weapon, +0xD4 protection counter (respawn sets 255; non-zero = invulnerable and the shield bubble is drawn), +0xEC object pointer. Object +124+44 is the 64-frame bomb-active timer.
@@ -45,3 +63,6 @@ Work on `main` is released as numbered builds; `wip` is the scratch branch.
 ## Open items
 - To Do list in README: force Ultra MAX by removing the mode select, the bomb-refill voice (やった), mode select highlight in gold.
 - The true last boss (Aki) condition: the owner was going to report play results.
+- After a MATSURI ARRANGE game, mode (+8) stays 1 until the next coin, so the next Ultra attract demo counts as `active` (ARRANGE features and the アレンジモード banner in the demo). Seen in MAME, build 21; not changed yet (owner to decide).
+- Blitter in MAME 0.289: `cv1k_v.cpp` (upload/draw formats documented there). The list kick is `0x0C049BE0` (vblank callback `0x0C049BBC`); begin-list `0x0C049DFC`; the 42 op emitters all write through `0x0C049B3C`.
+- MAME notes: `-state` with `-autoboot_script` does not run the script, so tests run from boot with a schedule. The blitter's VRAM can be dumped from Lua with `emu.item(manager.machine.devices[":blitter"].items["0/m_bitmaps"])` (`read_block` counts bytes).

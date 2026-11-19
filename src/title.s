@@ -14,8 +14,6 @@
 
         .text
         .equ BOMB_MAX, 6
-        .equ HUD_X, 192
-        .equ HUD_Y, 300
         .equ GOLD_VAL, 1
         .align  2
 
@@ -179,7 +177,6 @@ Lt_draw: .long  0x0C0548D8
 Lt_y1:   .long  228
 Lt_y2:   .long  240
 Lt_z:    .long  250
-Lt_orig: .long  0x0C0A2DE0
 S_item0: .asciz "CAVE MATSURI 1.5"
         .align  2
 S_item1: .asciz "MATSURI ARRANGE"
@@ -213,8 +210,6 @@ coin_draw:
         nop
         .align  2
 Lq_press: .long 0x0C169BC4
-Lq_T:     .long 0x0C0024D8
-Lq_vars:  .long 0x0C7CF000
 Lq_draw:  .long 0x0C0548D8
 
 ! ---------------------------------------------------------------- credits line hooks
@@ -393,13 +388,6 @@ hud_wrap:
         jmp     @r0
         nop
         .align  2
-Lh_pow:  .long  10000, 1000, 100, 10
-Lh_x:    .word  HUD_X
-Lh_y:    .word  HUD_Y
-Lh_z:    .word  250
-        .align  2
-Lh_vars: .long  0x0C7CF000
-Lh_num:  .long  0x0C054D74
 Lh_orig: .long  0x0C0AB7B0
 
 ! ---------------------------------------------------------------- bomb gauge
@@ -484,7 +472,6 @@ Lb_k:    .word  2000
 Lb_x0:   .word  220
 Lb_y:    .word  8
 Lb_s1:   .word  0x61E
-Lb_s2:   .word  0x61F
 Lb_z:    .word  0x100
 Lb_ff:   .word  0xFF
         .align  2
@@ -948,25 +935,6 @@ Lbw_d4:   .word 0xD4
 Lbw_shout: .long 0x0C0E2330
 
 
-! The bomb button path starts the big bomb blast with 0x0C0602A0(r4); skip it in ARRANGE Ultra.
-        .global bombfx_wrap
-bombfx_wrap:
-        sts.l   pr,@-r15
-        mov.l   r4,@-r15
-        bsr     active
-        nop
-        tst     r0,r0
-        mov.l   @r15+,r4
-        lds.l   @r15+,pr
-        bt      1f
-        rts
-        mov     #0,r0
-1:      mov.l   Lbf_orig,r0
-        jmp     @r0
-        nop
-        .align  2
-Lbf_orig: .long 0x0C0602A0
-
 ! Copy of the game's shout helper 0x0C0E2330 with sound id 0x92 (the bomb-refill voice).
 ! The original waits forever when the queue is busy; this copy gives up instead.
         .global shout92
@@ -1091,6 +1059,135 @@ Lbc_lim: .long  0x00007FFF
 Lbx_vars: .long 0x0C7CF000
 Lbx_mgr: .long  0x0C19CC40
 Lbx_q:   .long  0x0C7D0000
+
+! ---------------------------------------------------------------- ARRANGE banner (builds 21-22)
+! The frame renderer (0x0C0540F0) closes the frame's blitter list by calling 0x0C049E24 (append one long)
+! with 0xFFFFFFFF; that call comes here.  While MATSURI ARRANGE + Ultra is active and the patchers put the
+! アレンジモード picture into the u4 (BN_GLYPH, cut from the user's 360 GOD package), the list built so far is
+! walked and the two draws of the ウルトラモード banner (source 1304,768, 8x64 in VRAM: shadow and text) are
+! pointed at VRAM 1320,840, an unused spot of the same system sheet; when any were found, an upload of the
+! picture to that spot is appended (so it also works in the stage intro, and frames without the banner, such
+! as the title menu, get no upload).  Otherwise the list is closed untouched.
+!   list: 0x0C049B30 -> start of the list being built, 0x0C049B3C -> write pointer
+!   ops:  0x1xxx draw (20 bytes: +4 src x, +6 src y, +12 w-1, +14 h-1), 0x2xxx upload (16 + w*h*2 bytes),
+!         0xCxxx clip (4 bytes)
+        .equ BN_GLYPH, 0xA01FF000           ! u4 natural offset 0x1FF000: magic 'ARG1', then 8x64 ARGB1555
+        .align  2
+        .global end_wrap
+end_wrap:
+        sts.l   pr,@-r15
+        mov.l   r4,@-r15
+        mov.l   r5,@-r15
+        mov     #0,r5               ! r5 = banner draws found in this frame's list
+        bsr     active
+        nop
+        tst     r0,r0
+        bt      8f
+        mov.l   Le_glyph,r1         ! picture present?
+        mov.l   @r1,r0
+        mov.l   Le_magic,r2
+        cmp/eq  r2,r0
+        bf      8f
+        mov.l   Le_base,r1
+        mov.l   @r1,r2              ! r2 = op pointer
+        mov.l   Le_wp,r1
+        mov.l   @r1,r3              ! r3 = end of the list so far
+1:      cmp/hs  r3,r2
+        bt      5f
+        mov.w   @r2,r0
+        shlr8   r0
+        shlr2   r0
+        shlr2   r0
+        and     #15,r0
+        cmp/eq  #1,r0
+        bt      2f
+        cmp/eq  #2,r0
+        bt      3f
+        cmp/eq  #12,r0
+        bf      5f                  ! anything else: stop looking
+        bra     1b
+        add     #4,r2
+2:      mov.w   @(4,r2),r0          ! draw: the banner?
+        mov.w   Le_sx,r1
+        cmp/eq  r1,r0
+        bf      7f
+        mov.w   @(6,r2),r0
+        mov.w   Le_sy,r1
+        cmp/eq  r1,r0
+        bf      7f
+        mov.w   @(12,r2),r0
+        cmp/eq  #7,r0
+        bf      7f
+        mov.w   @(14,r2),r0
+        cmp/eq  #63,r0
+        bf      7f
+        mov.w   Le_nx,r0
+        mov.w   r0,@(4,r2)
+        mov.w   Le_ny,r0
+        mov.w   r0,@(6,r2)
+        add     #1,r5
+7:      bra     1b
+        add     #20,r2
+3:      mov.w   @(12,r2),r0         ! upload: skip header and pixels
+        mov.w   Le_m13,r1
+        and     r1,r0
+        add     #1,r0
+        mov     r0,r4
+        mov.w   @(14,r2),r0
+        mov.w   Le_m12,r1
+        and     r1,r0
+        add     #1,r0
+        mulu.w  r0,r4
+        sts     macl,r0
+        shll    r0
+        add     #16,r0
+        bra     1b
+        add     r0,r2
+5:      tst     r5,r5               ! no banner in this frame (title, menus): no upload
+        bt      8f
+        mov.l   Le_wp,r1            ! append the upload: header, then the 512 pixels from the u4
+        mov.l   @r1,r2
+        mova    Le_hdr,r0
+        mov.l   @r0,r3
+        mov.l   r3,@r2
+        mov.l   @(4,r0),r3
+        mov.l   r3,@(4,r2)
+        mov.l   @(8,r0),r3
+        mov.l   r3,@(8,r2)
+        mov.l   @(12,r0),r3
+        mov.l   r3,@(12,r2)
+        add     #16,r2
+        mov.l   Le_glyph,r3
+        add     #16,r3
+        mov.w   Le_n,r0             ! 256 longs = 8 x 64 pixels
+6:      mov.l   @r3+,r4
+        mov.l   r4,@r2
+        dt      r0
+        bf/s    6b
+        add     #4,r2
+        mov.l   r2,@r1
+8:      mov.l   @r15+,r5
+        mov.l   @r15+,r4
+        lds.l   @r15+,pr
+        mov.l   Le_emit,r0
+        jmp     @r0
+        nop
+        .align  2
+Le_hdr:  .long  0x20000000, 0x99999999
+         .word  1320, 840, 7, 63    ! upload: dst x, y, w-1, h-1
+Le_sx:   .word  1304
+Le_sy:   .word  768
+Le_nx:   .word  1320
+Le_ny:   .word  840
+Le_m13:  .word  0x1FFF
+Le_m12:  .word  0x0FFF
+Le_n:    .word  256
+        .align  2
+Le_glyph: .long BN_GLYPH
+Le_magic: .long 0x41524731          ! 'ARG1'
+Le_base:  .long 0x0C049B30
+Le_wp:    .long 0x0C049B3C
+Le_emit:  .long 0x0C049E24
 
 ! ---------------------------------------------------------------- sites table (appended by build.py)
         .align  2

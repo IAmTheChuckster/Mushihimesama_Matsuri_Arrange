@@ -1,21 +1,28 @@
-"""Copy a new build into the two patchers (../index.html, ../matsuri_patch.py) and the MiSTer .mra.
+"""Copy a new build into the two patchers (../index.html, ../patch.py) and the MiSTer .mra.
 
 Usage:
     python3 update_patchers.py ORIGINAL_matsuri15.zip PATCHED_u4_FILE BUILD_NUMBER
 
-PATCHED_u4_FILE is the output of build.py. The changed bytes (runs closer than 16 bytes are merged)
-are embedded in both patchers together with the new CRC and build number.
+PATCHED_u4_FILE is the output of build.py, built with the GOD package (so it holds the アレンジモード banner
+picture). The changed bytes (runs closer than 16 bytes are merged) are embedded in both patchers together
+with the new CRC and build number; the banner picture area (GLYPH_OFF, GLYPH_LEN) is left out, because the
+patchers cut the picture from the user's own GOD package. The CRC is that of the full u4.
 """
-import sys, os, re, zipfile, zlib, base64, json
+import sys, os, re, zipfile, zlib, base64
 
 orig_zip, new_u4, build = sys.argv[1], sys.argv[2], sys.argv[3]
 root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from build import GLYPH_OFF, GLYPH_LEN
 z = zipfile.ZipFile(orig_zip)
 o = z.read([n for n in z.namelist() if n.endswith('u4')][0])
 p = open(new_u4, 'rb').read()
 assert zlib.crc32(o) == 0x6AF99F0E, 'original u4 CRC is not 6af99f0e'
 assert len(o) == len(p)
 crc = zlib.crc32(p)
+g = p[GLYPH_OFF:GLYPH_OFF + GLYPH_LEN]
+assert g[:4] == b'RA1G', 'no banner picture in the u4: build it with the GOD package'   # 'ARG1' byte-swapped
+p = p[:GLYPH_OFF] + o[GLYPH_OFF:GLYPH_OFF + GLYPH_LEN] + p[GLYPH_OFF + GLYPH_LEN:]
 diff = [i for i in range(len(o)) if o[i] != p[i]]
 runs = []
 for i in diff:
@@ -32,7 +39,7 @@ def pyblocks():
         out += '    (0x%X, base64.b64decode(\n%s)),\n' % (a, lines)
     return out + ']'
 
-py = os.path.join(root, 'matsuri_patch.py')
+py = os.path.join(root, 'patch.py')
 s = open(py).read()
 s = re.sub(r'PATCHED_CRC = 0x[0-9A-Fa-f]{8}', 'PATCHED_CRC = 0x%08X' % crc, s)
 s = re.sub(r'checked to be [0-9a-f]{8}', 'checked to be %08x' % crc, s)

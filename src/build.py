@@ -30,7 +30,7 @@ def warning_lines():
     lines = ["  " + t for t in body]
     lines += [""] * (14 - len(lines))
     lines[9] = ctr("HAVE FUN!!!")
-    lines[13] = ctr("2026/11/10 MATSURI ARRANGE")
+    lines[13] = ctr("2026/11/20 MATSURI ARRANGE")
     return [l.ljust(30) for l in lines]
 
 
@@ -73,7 +73,12 @@ SITES = [(0x0C0A31E0, 0x0C0548D8, "coin_draw"),    # coin message task: draw tex
          (0x0C0A6C38, 0x2FC62FD6, "spawn_g_wrap"),
          (0x0C05FEBC, 0x0C05DB30, "bomb_wrap"),
          # build 17: bombfx removed (it also ran on death and broke name entry)
-         (0x0C05FEB8, 0x0C0E3B90, "bombgo_wrap")]  # bomb trigger -> cancel bullets into gems
+         (0x0C05FEB8, 0x0C0E3B90, "bombgo_wrap"),  # bomb trigger -> cancel bullets into gems
+         # builds 21-22: frame renderer's list-close call -> アレンジモード banner (picture at GLYPH_OFF)
+         (0x0C054160, 0x0C049E24, "end_wrap")]
+
+GLYPH_OFF = 0x1FF000        # natural u4 offset of the banner picture: 'ARG1' + 8x64 ARGB1555 (big-endian words);
+GLYPH_LEN = 16 + 8 * 64 * 2 # not shipped: patch.py / index.html cut it from the user's 360 GOD package
 
 def title_image():
     code, syms = asm("title")
@@ -89,7 +94,7 @@ def build_stub(image_len):
     code[-4:] = struct.pack(">I", cnt)
     return bytes(code)
 
-def build(u4):
+def build(u4, glyph=None):
     s = bytearray(swap(u4))
     for i, l in enumerate(warning_lines()):
         o = WARN_SLOT0 + 0x20 * i
@@ -100,11 +105,15 @@ def build(u4):
     assert struct.unpack(">I", s[BOOT_LIT:BOOT_LIT + 4])[0] == 0x0C059970
     img = title_image()
     assert len(img) <= U4_SIZE - IMAGE_AT and len(img) <= 0xF000
+    assert IMAGE_AT + len(img) <= GLYPH_OFF, "patch image runs into the banner picture"
     stub = build_stub(len(img))
     assert len(stub) <= 0x80
     s[STUB_AT:STUB_AT + len(stub)] = stub
     s[IMAGE_AT:IMAGE_AT + len(img)] = img
     s[BOOT_LIT:BOOT_LIT + 4] = struct.pack(">I", 0xA0000000 + STUB_AT)
+    if glyph is not None:
+        assert len(glyph) == GLYPH_LEN
+        s[GLYPH_OFF:GLYPH_OFF + GLYPH_LEN] = glyph
     return swap(bytes(s))
 
 def load_u4(path):
@@ -117,6 +126,11 @@ def load_u4(path):
 if __name__ == "__main__":
     u4 = load_u4(sys.argv[1])
     assert len(u4) == U4_SIZE and zlib.crc32(u4) == ORIG_CRC, "not the original matsuri15 u4"
-    out = build(u4)
+    glyph = None
+    if len(sys.argv) > 3:   # optional: the 360 GOD package -> アレンジモード banner picture
+        sys.path.insert(0, os.path.join(HERE, ".."))
+        import patch
+        glyph = patch.banner_glyph(sys.argv[3])
+    out = build(u4, glyph)
     open(sys.argv[2], "wb").write(out)
     print("patched crc %08x" % zlib.crc32(out))

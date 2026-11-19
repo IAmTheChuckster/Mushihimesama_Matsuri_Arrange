@@ -9,7 +9,8 @@ While Claude was used I put effort in making sure there are balanced gameplay.<b
 I did all the testing and planning.
 
 ## Change Notes
-- **Warning screen.** Shows a disclaimer that this is an unofficial project, `HAVE FUN!!!` and `2026/11/10 MATSURI ARRANGE`, both centred, all in capitals.
+Current build: **24** (patched u4 CRC `c664efdb`).
+- **Warning screen.** Shows a disclaimer that this is an unofficial project, `HAVE FUN!!!` and `2026/11/20 MATSURI ARRANGE`, both centred, all in capitals.
 - **Title menu.** After a coin is inserted, the title shows **CAVE MATSURI 1.5 / MATSURI ARRANGE** above `PRESS 1P OR 2P START` and `CREDITS`, which move down.
   - Move the arrow with the joystick up and down. The selected title is drawn in gold. It starts on CAVE MATSURI 1.5 every time; that is the unpatched game.
   - The ranking line at the bottom is hidden once a coin is in; the attract screen keeps it.
@@ -22,25 +23,29 @@ I did all the testing and planning.
   - **Straight into the game.** Choosing MATSURI ARRANGE runs through mode select (ULTRA) and shot select (top-right weapon) by itself and starts the game; change weapons in play with the 4th button.
   - **Bomb cancels bullets.** The bomb button (and the automatic bomb when you are hit) no longer does the normal bomb: it uses one bomb and turns every enemy bullet on screen into a small crystal gem, with no damage to enemies. She no longer throws the bomb ball, so there is no blast; you are invulnerable for about 1.5 seconds after using it, shown with the shield bubble. Nothing happens with 0 bombs.
   - **Bomb gauge.** For every 2000 counter points one gold swirl fills one of the 6 right-hand slots of the bomb bar, from the right edge to the left; at 12000 a bomb is added (maximum 6), she says the refill voice (sound 0x92), and the slots empty; the bomb button and the automatic bomb when you are hit give her bomb shout. The glyphs slide with the bar when it moves (boss start, score tally).
+  - **アレンジモード banner.** The mode banner under the hi-score reads アレンジモード instead of ウルトラモード while MATSURI ARRANGE is played, from the stage intro on (CAVE MATSURI keeps ウルトラモード). The picture is the Xbox 360 version's, cut from your own GOD package when you patch, so you need it to patch (see below).
 
 ## Patching the game
+You need two of your own dumps:
+- `matsuri15.zip`, the MAME set (the original u4 must have CRC `6af99f0e`)
+- your Xbox 360 Mushihimesama Games-on-Demand package as a `.zip` or `.7z`, any name; it must contain `5F9DF6331EAE85814989` and the `5F9DF6331EAE85814989.data` folder (in any subfolder). Only the アレンジモード banner picture is taken from it.
 
 ### Web Patcher
-Open the **[Web Patcher](https://iamthechuckster.github.io/Mushihimesama_Matsuri_Arrange/)** (`index.html`) and drop in your `matsuri15.zip`. It checks the file names and CRCs, builds the patched files automatically, and lets you download just the patched files or a complete `mushimatsuriarr.zip` romset. Everything runs in your browser; nothing is uploaded.
+Open the **[Web Patcher](https://iamthechuckster.github.io/Mushihimesama_Matsuri_Arrange/)** (`index.html`), drop in your `matsuri15.zip` and your GOD package. It checks the file names and CRCs, builds the patched files automatically, and lets you download the `.mra` or a complete `mushimatsuriarr.zip` romset. Everything runs in your browser; nothing is uploaded.
 
 ### With Python
-Needs Python 3 only. Download `matsuri_patch.py`, then run:
+Needs Python 3 only. Download `patch.py`, then run:
 ```
-python3 matsuri_patch.py matsuri15.zip --zip --mra
+python3 patch.py matsuri15.zip --god YOUR_GOD.zip --zip --mra
 ```
-This writes `matsuriarr_u4` (CRC `763ebfba`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written. The original u4 must have CRC `6af99f0e`.
+This writes `matsuriarr_u4` (CRC `c664efdb`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written.
 
 ### Using the patched files
 - **MAME:** copy your matsuri15 set, replace its u4 with `matsuriarr_u4`; the checksum warning is expected.
 - **MiSTer (CV1k core):** `mushimatsuriarr.zip` goes in `games/mame`, the `.mra` in `_Arcade`.
 
 ### Building from source
-`python3 src/build.py matsuri15.zip OUT_u4` (needs `binutils-sh4-linux-gnu`), then `python3 src/update_patchers.py matsuri15.zip OUT_u4 BUILD`.
+`python3 src/build.py matsuri15.zip OUT_u4 YOUR_GOD.zip` (needs `binutils-sh4-linux-gnu`), then `python3 src/update_patchers.py matsuri15.zip OUT_u4 BUILD`. Developer notes (how the patch works, game addresses, build log) are in [`dev_notes/NOTES.md`](dev_notes/NOTES.md).
 
 ## Testing
 This patch was tested with MAME 0.289 and [CV1k core for the MiSTer FPGA by Raki](https://www.patreon.com/c/ikamusume/posts)<br>
