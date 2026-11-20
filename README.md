@@ -9,10 +9,10 @@ While Claude was used I put effort in making sure there are balanced gameplay.<b
 I did all the testing and planning.
 
 ## Change Notes
-Current build: **30** (patched u4 CRC `050412f4`).
+Current build: **34** (patched u4 CRC `bfbfdc55`).
 - **Warning screen.** Shows a disclaimer that this is an unofficial project, `HAVE FUN!!!` and `2026/11/20 MATSURI ARRANGE`, both centred, all in capitals.
 - **Title menu.** After a coin is inserted, the title shows **CAVE MATSURI 1.5 / MATSURI ARRANGE** above `PRESS 1P OR 2P START` and `CREDITS`, which move down.
-  - Move the arrow with the joystick up and down. The selected title is drawn in gold. It starts on CAVE MATSURI 1.5 every time; that is the unpatched game.
+  - Move the arrow with the joystick up and down; each move plays the same cursor sound as the game's ORIGINAL / MANIAC / ULTRA mode select. The selected title is drawn in gold. It starts on CAVE MATSURI 1.5 every time; that is the unpatched game.
   - The ranking line at the bottom is hidden once a coin is in; the attract screen keeps it.
   - The game's own Original / Maniac / Ultra and shot select follow as usual.
 - **MATSURI ARRANGE (Ultra mode only).** Original and Maniac are unchanged for now.
@@ -23,7 +23,6 @@ Current build: **30** (patched u4 CRC `050412f4`).
   - **Straight into the game.** Choosing MATSURI ARRANGE runs through mode select (ULTRA) and shot select (top-right weapon) by itself and starts the game; change weapons in play with the 4th button.
   - **Bomb cancels bullets.** The bomb button (and the automatic bomb when you are hit) no longer does the normal bomb: it uses one bomb and turns every enemy bullet on screen into a small crystal gem, with no damage to enemies. She no longer throws the bomb ball, so there is no blast; you are invulnerable for about 1.5 seconds after using it, shown with the shield bubble. Nothing happens with 0 bombs.
   - **Bomb gauge.** For every 2000 counter points one gold swirl fills one of the 6 right-hand slots of the bomb bar, from the right edge to the left; at 12000 a bomb is added (maximum 6), she says the refill voice (sound 0x92), and the slots empty; the bomb button and the automatic bomb when you are hit give her bomb shout. The glyphs slide with the bar when it moves (boss start, score tally).
-  - **Bullet graze.** Every enemy bullet within 24 px of your ship adds 1 to a graze counter every frame it stays that close (shield or not), and 100 points to your score each time. The counter is shown in the gold point-number digits right under the `+` counter, and only while the `+` counter is shown (it slides in and out with it, and is hidden on the CONTINUE and GAME OVER screens). It never counts down: it goes back to 0 when the next stage starts, and is kept when you lose a life or continue.
   - **アレンジモード banner.** The mode banner under the hi-score reads アレンジモード instead of ウルトラモード while MATSURI ARRANGE is played, from the stage intro on, and its glowing bar is red instead of purple (CAVE MATSURI keeps the purple ウルトラモード banner). The picture is the Xbox 360 version's, cut from your own GOD package when you patch, so you need it to patch (see below).
 
 ## Patching the game
@@ -39,7 +38,7 @@ Needs Python 3 only. Download `patch.py`, then run:
 ```
 python3 patch.py matsuri15.zip --god YOUR_GOD.zip --zip --mra
 ```
-This writes `matsuriarr_u4` (CRC `050412f4`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written.
+This writes `matsuriarr_u4` (CRC `bfbfdc55`), `mushimatsuriarr.zip` (u2, u23, u24, matsuriarr_u4) and `Mushihimesama Matsuri Arrange.mra` for MiSTer. `-o FILE` sets where `matsuriarr_u4` is written.
 
 ### Using the patched files
 - **MAME:** copy your matsuri15 set, replace its u4 with `matsuriarr_u4`; the checksum warning is expected.

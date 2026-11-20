@@ -39,8 +39,6 @@ patcher:
         mov.l   r0,@(16,r1)
         mov.l   r0,@(20,r1)
         mov.l   r0,@(24,r1)
-        mov.l   r0,@(32,r1)
-        mov.l   r0,@(36,r1)
         mov.l   Lp_main,r0
         jmp     @r0
         nop
@@ -98,24 +96,26 @@ title_wrap:
         mov.l   r0,@(8,r9)          ! cursor back on CAVE MATSURI 1.5
 1:      mov     #0,r0
         mov.l   r0,@(16,r9)         ! gem counter back to 0 for the next game
-        mov.l   r0,@(32,r9)         ! graze counter and its stage (stage 1 = 0) too
-        mov.l   r0,@(36,r9)
         mov.l   Lt_e1,r1
         mov.l   @r1,r2
         mov.l   Lt_e2,r1
         mov.l   @r1,r3
         or      r3,r2               ! new presses of player 1 or 2
+        mov.l   @(8,r9),r3          ! r3 = new selection, from the current one
         mov     #1,r0
         tst     r0,r2               ! stick up
         bt      2f
-        mov     #0,r0
-        bra     3f
-        mov.l   r0,@(8,r9)
+        mov     #0,r3
 2:      mov     #2,r0
         tst     r0,r2               ! stick down
+        bt      21f
+        mov     #1,r3
+21:     mov.l   @(8,r9),r0
+        cmp/eq  r3,r0
         bt      3f
-        mov     #1,r0
-        mov.l   r0,@(8,r9)
+        mov.l   r3,@(8,r9)          ! the arrow moved: the mode select's cursor sound (build 32)
+        bsr     se56
+        nop
 3:      mov.l   Lt_cp,r1
         mov.l   @r1,r1
         mov.l   r1,@-r15            ! the game's current text colour
@@ -186,6 +186,54 @@ S_item0: .asciz "CAVE MATSURI 1.5"
 S_item1: .asciz "MATSURI ARRANGE"
         .align  2
 S_arrow: .asciz ">"
+
+! ---------------------------------------------------------------- se56 (build 32)
+! Queues the mode select's cursor sound, exactly as the game does when its ORIGINAL / MANIAC / ULTRA
+! cursor moves: entry (id 0x56, 0x01, 0x1E, 0xF0, type 6) in the sound queue at 0x0C2DCB58 (5 bytes per
+! entry, index at 0x0C2DCB54, 0..127; same queue as shout92).  Gives up when the queue is busy.
+! Clobbers r0-r3.
+        .align  2
+se56:
+        mov.l   Lse_busy,r1
+        mov.l   @r1,r0
+        tst     r0,r0
+        bf      9f
+        mov.l   Lse_flag,r3
+        mov     #1,r0
+        mov.l   r0,@r3              ! queue in use
+        mov.l   Lse_idx,r1
+        mov.l   @r1,r0
+        mov     r0,r2
+        shll2   r2
+        add     r0,r2               ! idx * 5
+        mov.l   Lse_buf,r0
+        add     r0,r2               ! r2 = the entry
+        mov     #0x56,r0
+        mov.b   r0,@r2              ! id
+        mov     #1,r0
+        mov.b   r0,@(1,r2)
+        mov     #0x1E,r0
+        mov.b   r0,@(2,r2)
+        mov     #-16,r0             ! 0xF0
+        mov.b   r0,@(3,r2)
+        mov     #6,r0
+        mov.b   r0,@(4,r2)          ! type 6 = sound effect
+        mov.l   @r1,r0              ! next index, 127 wraps to 0
+        add     #1,r0
+        mov     #127,r2
+        cmp/gt  r2,r0
+        bf      1f
+        mov     #0,r0
+1:      mov.l   r0,@r1
+        mov     #0,r0
+        mov.l   r0,@r3              ! queue free
+9:      rts
+        nop
+        .align  2
+Lse_idx:  .long 0x0C2DCB54
+Lse_buf:  .long 0x0C2DCB58
+Lse_busy: .long 0x0C2DCB48
+Lse_flag: .long 0x0C2DCB4C
 
 ! ---------------------------------------------------------------- coin message hook
 ! Replaces the draw-text pointer in the coin message task.  When PRESS 1P OR 2P
@@ -382,8 +430,6 @@ hud_wrap:
         bsr     wsw                 ! 4th button: cycle weapon
         nop
         bsr     gauge               ! gold bomb gauge in the right 6 slots
-        nop
-        bsr     graze               ! graze counter and score (build 25)
         nop
 9:      mov.l   @r15+,r7
         mov.l   @r15+,r6
@@ -1094,9 +1140,6 @@ end_wrap:
         mov.l   Le_magic,r2
         cmp/eq  r2,r0
         bf      8f
-        mov.l   Le_vars,r1
-        mov     #0,r0
-        mov.l   r0,@(56,r1)         ! VARS+56 = the game's + counter is drawn this frame
         mov.l   Le_base,r1
         mov.l   @r1,r2              ! r2 = op pointer
         mov.l   Le_wp,r1
@@ -1116,28 +1159,7 @@ end_wrap:
         bf      5f                  ! anything else: stop looking
         bra     1b
         add     #4,r2
-2:      mov.w   @(4,r2),r0          ! draw: the + sign of the game's + counter (src 5992,160)?
-        mov.w   Le_px,r1
-        cmp/eq  r1,r0
-        bf      21f
-        mov.w   @(6,r2),r0
-        mov.w   Le_py,r1
-        cmp/eq  r1,r0
-        bf      7f
-        mov.l   Le_vars,r1
-        mov     #1,r0
-        mov.l   r0,@(56,r1)
-        mov.w   @(2,r2),r0          ! the main draw (not the shadow): the graze counter is placed
-        mov.w   Le_pa,r1            ! from it, so it slides in and out with the + counter
-        cmp/eq  r1,r0
-        bf      7f
-        mov.l   Le_vars,r1
-        mov.w   @(8,r2),r0
-        mov.l   r0,@(40,r1)
-        mov.w   @(10,r2),r0
-        bra     7f
-        mov.l   r0,@(44,r1)
-21:     mov.w   @(4,r2),r0          ! draw: the banner?
+2:      mov.w   @(4,r2),r0          ! draw: the banner?
         mov.w   Le_sx,r1
         cmp/eq  r1,r0
         bf      7f
@@ -1156,16 +1178,11 @@ end_wrap:
         mov.w   Le_ny,r0
         mov.w   r0,@(6,r2)
         add     #1,r5
-        mov.w   @r2,r0              ! the text draw (not the shadow): the graze counter's draws
-        mov.w   Le_txt,r1           ! go right after it in the list (layered like the HUD)
+        mov.w   @r2,r0              ! the text draw: nothing more to do; the shadow draw: see below
+        mov.w   Le_txt,r1
         cmp/eq  r1,r0
-        bf      23f
-        mov.l   Le_vars,r1
-        mov     r2,r0
-        add     #20,r0
-        bra     7f
-        mov.l   r0,@(52,r1)         ! right after it: where the graze counter's draws are inserted
-23:     mov     r2,r4               ! the shadow draw: the banner's glowing bar is the draw before it
+        bt      7f
+        mov     r2,r4               ! the shadow draw: the banner's glowing bar is the draw before it
         add     #-20,r4             ! (src 4880,512, 16x224, tint 0/0/0x80 = purple); make it red
         mov.w   @(4,r4),r0
         mov.w   Le_bx,r1
@@ -1218,9 +1235,6 @@ end_wrap:
         dt      r0
         bf/s    6b
         add     #4,r2
-        bsr     gznum               ! graze counter in gold digits (appends draws at r2)
-        nop
-        mov.l   Le_wp,r1
         mov.l   r2,@r1
 8:      mov.l   @r15+,r5
         mov.l   @r15+,r4
@@ -1239,256 +1253,15 @@ Le_m13:  .word  0x1FFF
 Le_m12:  .word  0x0FFF
 Le_n:    .word  256
 Le_txt:  .word  0x1100
-Le_px:   .word  5992
-Le_py:   .word  160
-Le_pa:   .word  0xFF00
 Le_bx:   .word  4880                ! banner bar: src x, y and the red tint (R 0x80)
 Le_by:   .word  512
 Le_br:   .word  0x0080
         .align  2
-Le_vars:  .long 0x0C7CF000
 Le_glyph: .long BN_GLYPH
 Le_magic: .long 0x41524731          ! 'ARG1'
 Le_base:  .long 0x0C049B30
 Le_wp:    .long 0x0C049B3C
 Le_emit:  .long 0x0C049E24
-
-! ---------------------------------------------------------------- graze (build 25)
-! Called every frame by hud_wrap while MATSURI ARRANGE + Ultra is active.  Every enemy bullet within
-! GZ_R px of player 1 (shield or not) adds 1 to the graze counter (VARS+32) and 100 points to the score,
-! every frame it stays in range.  The counter never counts down; it goes back to 0 when a new stage
-! starts (build 28: the stage number differs from VARS+36) and for a new game; deaths and continues
-! keep it.
-!   player 1 x, y: 0x0C1FBC0C +0x4C, +0x50 (16.16, the same space as the bullets)
-!   score: 12 digits at 0x0C1FBC30 (ones first); 0x0C05A390(r4 digits, r5 points) adds to it
-!   VARS +32 graze counter (0..999999), +36 the stage it belongs to (0x0C1FB634, 0 = stage 1)
-        .equ GZ_R, 24
-        .align  2
-graze:
-        sts.l   pr,@-r15
-        mov.l   r8,@-r15
-        mov.l   r9,@-r15
-        mov.l   r10,@-r15
-        mov.l   r11,@-r15
-        mov.l   r12,@-r15
-        mov.l   Lz_stage,r1         ! a new stage: the graze counter goes back to 0
-        mov.l   @r1,r0
-        mov.l   Lz_vars,r1
-        mov.l   @(36,r1),r2
-        cmp/eq  r2,r0
-        bt      0f
-        mov.l   r0,@(36,r1)
-        mov     #0,r0
-        mov.l   r0,@(32,r1)
-0:      mov.l   Lz_pl,r1
-        mov     #0x4C,r0
-        mov.l   @(r0,r1),r8         ! r8 = player x
-        add     #4,r0
-        mov.l   @(r0,r1),r9         ! r9 = player y
-        mov     #0,r10              ! r10 = bullets in range this frame
-        mov.l   Lz_mgrp,r0
-        mov.l   @r0,r11
-        tst     r11,r11
-        bt      5f
-        mov.l   Lz_head,r0
-        mov.l   @(r0,r11),r12       ! r12 = first active bullet
-1:      tst     r12,r12
-        bt      5f
-        mov.l   @(16,r12),r1
-        sub     r8,r1
-        shlr16  r1
-        exts.w  r1,r1               ! dx in pixels
-        mov.l   @(20,r12),r2
-        sub     r9,r2
-        shlr16  r2
-        exts.w  r2,r2               ! dy in pixels
-        mov     #GZ_R,r3
-        mov     r1,r0
-        cmp/pz  r0
-        bt      2f
-        neg     r0,r0
-2:      cmp/hi  r3,r0
-        bt      4f
-        mov     r2,r0
-        cmp/pz  r0
-        bt      3f
-        neg     r0,r0
-3:      cmp/hi  r3,r0
-        bt      4f
-        muls.w  r1,r1
-        sts     macl,r1
-        muls.w  r2,r2
-        sts     macl,r2
-        add     r2,r1
-        mov.w   Lz_r2,r3
-        cmp/hi  r3,r1
-        bt      4f
-        add     #1,r10
-4:      bra     1b
-        mov.l   @r12,r12            ! next bullet
-5:      mov.l   Lz_vars,r1
-        tst     r10,r10
-        bt      9f                  ! nothing in range: the counter just stays (build 28: no countdown)
-        mov.l   @(32,r1),r0         ! grazing: counter up, score up
-        add     r10,r0
-        mov.l   Lz_max,r2
-        cmp/hi  r2,r0
-        bf      6f
-        mov     r2,r0
-6:      mov.l   r0,@(32,r1)
-        mov     #100,r0
-        mulu.w  r0,r10
-        sts     macl,r5             ! r5 = 100 points per bullet in range
-        mov.l   Lz_score,r4
-        mov.l   Lz_add,r0
-        jsr     @r0
-        nop
-9:      mov.l   @r15+,r12
-        mov.l   @r15+,r11
-        mov.l   @r15+,r10
-        mov.l   @r15+,r9
-        mov.l   @r15+,r8
-        lds.l   @r15+,pr
-        rts
-        nop
-Lz_r2:   .word  GZ_R*GZ_R
-        .align  2
-Lz_pl:    .long 0x0C1FBC0C
-Lz_mgrp:  .long 0x0C19CC40
-Lz_head:  .long 0x7E004
-Lz_vars:  .long 0x0C7CF000
-Lz_max:   .long 999999
-Lz_score: .long 0x0C1FBC30
-Lz_add:   .long 0x0C05A390
-Lz_stage: .long 0x0C1FB634          ! stage number (0 = stage 1), next to the game mode word
-
-! gznum: called by end_wrap with r2 = end of the frame's list; returns r2 = the new end.  When the
-! graze counter is not 0, inserts one draw per digit (no leading zeros) right after the banner text
-! draw (VARS +52), so the counter is layered like the rest of the HUD (whatever the game draws over the
-! HUD, such as the black GAME OVER screen, covers it too).  Digits: the game's gold point digits, the
-! white 16x16 digit d at VRAM 5888,16d drawn with the tint the score pop-ups use (R 0xBF, G 0x80,
-! B 0x40).  Drawn only when the game drew its own + counter this frame (VARS +56), placed from the
-! dst of its + sign's main draw (VARS +40/+44, src 5992,160, alpha 0xFF00): first digit cell at
-! dst (+GZ_DX, +GZ_DY), i.e. under the + sign, 8 px apart.  The + counter slides off the left edge when
-! it is not in use, and the graze counter slides with it.  The draws are built at Ln_tmp first, then
-! the rest of the list is moved down to make room.
-        .equ GZ_DX, -14
-        .equ GZ_DY, 6
-        .align  2
-gznum:
-        mov.l   r8,@-r15
-        mov.l   r9,@-r15
-        mov.l   r10,@-r15
-        mov.l   r11,@-r15
-        mov.l   r12,@-r15
-        mov.l   r13,@-r15
-        mov     r2,r12              ! r12 = end of the list
-        mov.l   Ln_vars2,r3
-        mov.l   @(56,r3),r0         ! only while the game's + counter is shown (hidden on CONTINUE,
-        tst     r0,r0               ! GAME OVER, before the first points, ...)
-        bt      8f
-        mov.l   Ln_stage,r0         ! and not a value left from the previous stage (next stage's
-        mov.l   @r0,r0              ! intro, before graze has reset it)
-        mov.l   @(36,r3),r6
-        cmp/eq  r6,r0
-        bf      8f
-        mov.l   @(32,r3),r6         ! r6 = counter (what is left of it)
-        tst     r6,r6
-        bt      8f
-        mov.l   @(40,r3),r8
-        mov.w   Ln_dx,r0
-        add     r0,r8               ! r8 = dst x of the digits
-        mov.l   @(44,r3),r9
-        mov.w   Ln_dy,r0
-        add     r0,r9               ! r9 = dst y of the first digit
-        mov.l   Ln_tmp,r2
-        mov     r2,r13              ! r13 = start of the new draws
-        mova    Ln_pow,r0
-        mov     r0,r10              ! r10 = powers of ten, 0-terminated
-        mov     #0,r11              ! r11 = digits drawn so far
-1:      mov.l   @r10+,r3
-        tst     r3,r3
-        bt      5f
-        mov     #0,r7
-2:      cmp/hs  r3,r6
-        bf      3f
-        sub     r3,r6
-        bra     2b
-        add     #1,r7
-3:      tst     r7,r7               ! leading zero: skip
-        bf      4f
-        tst     r11,r11
-        bt      1b
-4:      mov.w   Ln_attr,r0
-        mov.w   r0,@r2
-        mov.w   Ln_alpha,r0
-        mov.w   r0,@(2,r2)
-        mov.w   Ln_srcx,r0
-        mov.w   r0,@(4,r2)
-        mov     r7,r0
-        shll2   r0
-        shll2   r0
-        mov.w   r0,@(6,r2)          ! src y = 16 * digit
-        mov     r8,r0
-        mov.w   r0,@(8,r2)
-        mov     r9,r0
-        mov.w   r0,@(10,r2)
-        mov     #15,r0
-        mov.w   r0,@(12,r2)
-        mov.w   r0,@(14,r2)
-        mov.w   Ln_tr,r0
-        mov.w   r0,@(16,r2)
-        mov.w   Ln_tgb,r0
-        mov.w   r0,@(18,r2)
-        add     #20,r2
-        add     #8,r9
-        bra     1b
-        add     #1,r11
-5:      mov     r2,r7
-        sub     r13,r7              ! r7 = bytes to insert
-        mov.l   Ln_vars2,r3
-        mov.l   @(52,r3),r3         ! r3 = insert point (after the banner text draw)
-        mov     r12,r0              ! move [r3, end) down by r7, from the end backwards
-        mov     r12,r6
-        add     r7,r6
-6:      cmp/hi  r3,r0
-        bf      7f
-        add     #-4,r0
-        add     #-4,r6
-        mov.l   @r0,r4
-        bra     6b
-        mov.l   r4,@r6
-7:      mov     r7,r5               ! copy the new draws in
-71:     mov.l   @r13+,r4
-        mov.l   r4,@r3
-        add     #4,r3
-        add     #-4,r5
-        tst     r5,r5
-        bf      71b
-        mov     r12,r2
-        bra     9f
-        add     r7,r2
-8:      mov     r12,r2
-9:      mov.l   @r15+,r13
-        mov.l   @r15+,r12
-        mov.l   @r15+,r11
-        mov.l   @r15+,r10
-        mov.l   @r15+,r9
-        mov.l   @r15+,r8
-        rts
-        nop
-Ln_dx:    .word GZ_DX
-Ln_dy:    .word GZ_DY
-Ln_attr:  .word 0x1300
-Ln_alpha: .word 0xFF00
-Ln_srcx:  .word 5888
-Ln_tr:    .word 0x00BF
-Ln_tgb:   .word 0x8040
-        .align  2
-Ln_vars2: .long 0x0C7CF000
-Ln_tmp:   .long 0x0C7CF100          ! room for 6 draws (120 bytes)
-Ln_stage: .long 0x0C1FB634
-Ln_pow:   .long 100000, 10000, 1000, 100, 10, 1, 0
 
 ! ---------------------------------------------------------------- sites table (appended by build.py)
         .align  2
