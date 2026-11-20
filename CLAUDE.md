@@ -39,10 +39,11 @@ symlinks `sh4-linux-gnu-{as,objcopy,nm}` -> `/usr/bin/sh-elf-*` in a temp dir at
 4. `python3 -I src/update_patchers.py roms/matsuri15.zip OUT_u4 BUILD` (BUILD = next build number) updates
    `patch.py`, `index.html` and writes the MRA to the repo root; move it to `mister/` (it must differ from the
    previous one only in CRC/date).
-5. Verify: `python3 -I patch.py roms/matsuri15.zip --god roms/435A07E3.zip --zip --mra` must give a u4 identical
-   to `OUT_u4` (it writes into `roms/`, which also gives the owner the test files), and the web page with the same
-   two files must show the same CRC ("Matches build N"). For the page: serve the repo on 127.0.0.1, open it in
-   the built-in browser, feed both files to the inputs with a DataTransfer, read `#outcrc`.
+5. Verify: copy `roms/matsuri15.zip` to a scratch folder and run
+   `python3 -I patch.py SCRATCH/matsuri15.zip --god roms/435A07E3.zip --zip --mra`; it must give a u4 identical
+   to `OUT_u4`. **Never write patched files into `roms/`**: the owner makes them with the web patcher. The web page
+   with the same two files must show the same CRC ("Matches build N"). For the page: serve the repo on 127.0.0.1,
+   open it in the built-in browser, feed both files to the inputs with a DataTransfer, read `#outcrc`.
 6. Update README + dev notes (rules above).
 Run Python with `-I`.
 
